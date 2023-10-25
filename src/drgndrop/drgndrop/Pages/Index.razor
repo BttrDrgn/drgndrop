@@ -1,0 +1,185 @@
+﻿@page "/"
+@using drgndrop;
+@using SevenZip;
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavManager
+@inject IClipboardService ClipboardService
+@inject IJSRuntime JS
+
+<PageTitle>Index</PageTitle>
+
+<div class="container">
+    @{
+        <h1>Drgndrop</h1>
+
+        if(LinkToFile == "")
+        {
+            if (!Uploading)
+            {
+                <div class="new-line"></div>
+                <form>
+                    <div class="new-line"></div>
+                    <InputFile OnChange="@UploadFiles" />
+                    <div class="new-line"></div>
+                    <input type="checkbox" id="encrypt" @bind="@Encrypted"/>
+                    <label for="encrypt">Encrypt</label>
+                </form>
+            }
+            else
+            {
+                <div class="new-line"></div>
+                <LoadingTemplate>
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Uploading...
+                </LoadingTemplate>
+                <div class="new-line"></div>
+                <p>@(Utils.BytesToMB(UploadedBytes, 2))MB / @(Utils.BytesToMB(FileSize, 2))MB</p>
+            }
+        }
+    }
+
+    @if (ErrorMsg != "")
+    {
+        <div class="new-line"></div>
+        <p>Error: @ErrorMsg</p>
+    }
+
+    @if(LinkToFile != "")
+    {
+        <div class="new-line"></div>
+        <div class="container">
+            @if(AutoCopied){ <p>Link automatically copied to clipboard</p> }
+            <div class="new-line"></div>
+            <input type="text" id="link" @bind="@LinkToFile" size="64" style="width:100%" readonly />
+        </div>
+    }
+
+    @if(!Uploading && LinkToFile != "")
+    {
+        <div class="new-line"></div>
+        <button onclick="@(() => { LinkToFile = ""; ErrorMsg = ""; })">Upload Another</button>
+    }
+</div>
+
+
+@code
+{
+    public int MaxSize = 50 * 1024 * 1024;
+    public string ErrorMsg = "";
+    public List<string> FileList = new List<string>();
+    public bool Uploading = false;
+    private bool Encrypted = true;
+    private int UploadedBytes = 0;
+    private int FileSize = 0;
+    private string LinkToFile = "";
+    private bool AutoCopied = false;
+
+    async Task UploadFiles(InputFileChangeEventArgs e)
+    {
+        AutoCopied = false;
+        ErrorMsg = "";
+        Uploading = true;
+        FileList.Clear();
+
+        var files = e.GetMultipleFiles();
+
+        if(files.Count > 1)
+        {
+            ErrorMsg = $"Currently only one file per upload is allowed!";
+            Uploading = false;
+            return;
+        }
+
+        var file = files[0];
+        var id = $"{Utils.GenID()}.{Utils.GetExtension(file.Name)}";
+        var pass = Utils.GenPass();
+        var path = Path.Combine(Program.UploadPath, id);
+
+        await using var timer = new Timer(_ => InvokeAsync(() => StateHasChanged()));
+        timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
+
+        try
+        {
+            if (file.Size >= MaxSize)
+            {
+                ErrorMsg = $"One or more file sizes are too big ({file.Name})! The size limit is {MaxSize / 1024 / 1024} MB per file.";
+                throw new InvalidOperationException(ErrorMsg);
+            }
+
+            FileSize = (int)file.Size;
+
+            if (Encrypted)
+            {
+                var ms = new MemoryStream();
+                using var rs = file.OpenReadStream(MaxSize);
+
+                byte[] buffer = new byte[rs.Length];
+                while (await rs.ReadAsync(buffer, 0, (int)rs.Length) is int read && read > 0)
+                {
+                    UploadedBytes += read;
+                    ms.Write(buffer, 0, read);
+                }
+
+                var fs = new FileStream(path, FileMode.Create);
+                await Program.Compressor.CompressStreamAsync(ms, fs, pass);
+                fs.Close();
+            }
+            else
+            {
+                var fs = new FileStream(path, FileMode.Create);
+                using var rs = file.OpenReadStream(MaxSize);
+
+                byte[] buffer = new byte[rs.Length];
+                while (await rs.ReadAsync(buffer, 0, (int)rs.Length) is int read && read > 0)
+                {
+                    UploadedBytes += read;
+                    fs.Write(buffer, 0, read);
+                }
+                fs.Close();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            ErrorMsg = ex.Message;
+
+            timer.Dispose();
+            File.Delete(path);
+            Uploading = false;
+            return;
+        }
+
+        timer.Dispose();
+
+        if (Encrypted)
+        {
+            LinkToFile = Utils.GenLink($"files/{id}?key={pass}");
+        }
+        else
+        {
+            LinkToFile = Utils.GenLink($"files/{id}");
+        }
+
+        if (await JS.InvokeAsync<bool>("document.hasFocus"))
+        {
+            try
+            {
+                await ClipboardService.CopyToClipboard(LinkToFile);
+                AutoCopied = true;
+            }
+            catch (Exception ex)
+            {
+                ErrorMsg = "Access denied to clipboard! Must manually copy.";
+                AutoCopied = false;
+            }
+        }
+        else
+        {
+            AutoCopied = false;
+        }
+
+        Uploading = false;
+        FileSize = 0;
+        UploadedBytes = 0;
+    }
+}
