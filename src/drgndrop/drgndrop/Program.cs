@@ -22,6 +22,7 @@ namespace drgndrop
         public static string UploadPath = Path.Combine("C:", "drgndrop", "uploads");
         public static string TempPath = Path.Combine("C:", "drgndrop", "temp");
         public static string LibPath = Path.Combine("C:", "drgndrop", "lib");
+        public static int MaxFileSize = 100 * 1024 * 1024;
         public static SevenZipCompressor Compressor = null;
 
         public static void Main(string[] args)
@@ -90,14 +91,16 @@ namespace drgndrop
                     }
                     else
                     {
-                        if (isArchive)
-                        {
-                            return Results.Stream(File.OpenRead(filePath), Utils.GetMIMEType(""));
-                        }
-                        else
-                        {
-                            return Results.Stream(File.OpenRead(filePath), Utils.GetMIMEType(Path.GetFileName(filePath)));
-                        }
+                        SevenZipExtractor extractor = new SevenZipExtractor(filePath);
+
+                        var tempPath = Path.Combine(TempPath, $".{Utils.GenID()}.tmp");
+                        FileStream temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite);
+                        File.SetAttributes(temp.SafeFileHandle, FileAttributes.Hidden);
+                        await extractor.ExtractFileAsync(0, temp);
+                        temp.Close();
+
+                        var res = Results.Stream(File.OpenRead(tempPath), Utils.GetMIMEType(Path.GetFileName(filePath)));
+                        return res;
                     }
                 }
                 catch (Exception ex)

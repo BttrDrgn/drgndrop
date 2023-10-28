@@ -12,7 +12,7 @@
     @{
         <h1>Drgndrop</h1>
 
-        if(LinkToFile == "")
+        if(!Finished)
         {
             if (!Uploading)
             {
@@ -33,53 +33,73 @@
                     Uploading...
                 </LoadingTemplate>
                 <div class="new-line"></div>
-                <p>@(Utils.BytesToMB(UploadedBytes, 2))MB / @(Utils.BytesToMB(FileSize, 2))MB</p>
+                <p>@(Utils.BytesToMB(UploadedBytes, 2))MB / @(Utils.BytesToMB(DroppedFile.Size, 2))MB</p>
             }
         }
     }
 
-    @if (ErrorMsg != "")
+    @if (Errored)
     {
         <div class="new-line"></div>
         <p>Error: @ErrorMsg</p>
     }
 
-    @if(LinkToFile != "")
+    @if(Finished)
     {
-        <div class="new-line"></div>
-        <div class="container">
-            @if(AutoCopied){ <p>Link automatically copied to clipboard</p> }
+        @if (!Errored)
+        {
             <div class="new-line"></div>
-            <input type="text" id="link" @bind="@LinkToFile" size="64" style="width:100%" readonly />
-        </div>
-    }
+            <div class="container">
+                @if(AutoCopied){ <p>Link automatically copied to clipboard</p> }
+                <div class="new-line"></div>
+                <input type="text" id="link" @bind="@LinkToFile" size="64" style="width:100%" readonly />
+            </div>
+        }
 
-    @if(!Uploading && LinkToFile != "")
-    {
-        <div class="new-line"></div>
-        <button onclick="@(() => { LinkToFile = ""; ErrorMsg = ""; })">Upload Another</button>
+        @if(!Uploading)
+        {
+            <div class="new-line"></div>
+            <button onclick="@ResetState">Upload Another</button>
+        }
     }
 </div>
 
 
 @code
 {
-    public int MaxSize = 50 * 1024 * 1024;
     public string ErrorMsg = "";
-    public List<string> FileList = new List<string>();
+    public bool Errored => ErrorMsg != "";
     public bool Uploading = false;
     private bool Encrypted = true;
     private int UploadedBytes = 0;
-    private int FileSize = 0;
     private string LinkToFile = "";
     private bool AutoCopied = false;
+    public bool Finished = false;
+    public IBrowserFile DroppedFile = null;
 
-    async Task UploadFiles(InputFileChangeEventArgs e)
+    public string FileID = "";
+    public string FileExt => Utils.GetExtension(DroppedFile.Name);
+    public string FileName => $"{FileID}.{FileExt}";
+    public string Password = "";
+    public string FilePath => Path.Combine(Program.UploadPath, FileName);
+    public Timer Timer = null;
+
+    public void ResetState()
     {
         AutoCopied = false;
         ErrorMsg = "";
-        Uploading = true;
-        FileList.Clear();
+        Uploading = false;
+        Finished = false;
+        UploadedBytes = 0;
+
+        DroppedFile = null;
+
+        Password = "";
+    }
+
+    async Task UploadFiles(InputFileChangeEventArgs e)
+    {
+        ResetState();
 
         var files = e.GetMultipleFiles();
 
@@ -90,75 +110,83 @@
             return;
         }
 
-        var file = files[0];
-        var id = $"{Utils.GenID()}.{Utils.GetExtension(file.Name)}";
-        var pass = Utils.GenPass();
-        var path = Path.Combine(Program.UploadPath, id);
+        DroppedFile = files[0];
+        var drgnfile = GenerateNewFile();
 
-        await using var timer = new Timer(_ => InvokeAsync(() => StateHasChanged()));
-        timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
+        await using var Timer = new Timer(_ => InvokeAsync(() => StateHasChanged()));
+        Timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
+
+        ProcessFile(drgnfile);
+        CopyToClipboard();
+
+        Timer.Dispose();
+        Uploading = false;
+        Finished = true;
+    }
+
+    public Drgnfile GenerateNewFile()
+    {
+        FileID = Utils.GenID();
+        if(Encrypted) Password = Utils.GenPass();
+
+        return new Drgnfile(DroppedFile.Name, Password ?? "");
+    }
+
+    public async void ProcessFile(Drgnfile drgnfile)
+    {
+        Uploading = true;
 
         try
         {
-            if (file.Size >= MaxSize)
+            if (DroppedFile.Size >= Program.MaxFileSize)
             {
-                ErrorMsg = $"One or more file sizes are too big ({file.Name})! The size limit is {MaxSize / 1024 / 1024} MB per file.";
+                ErrorMsg = $"One or more file sizes are too big ({DroppedFile.Name})! The size limit is {Utils.BytesToMB(Program.MaxFileSize)} MB per file.";
                 throw new InvalidOperationException(ErrorMsg);
             }
 
-            FileSize = (int)file.Size;
+            using var rs = DroppedFile.OpenReadStream(Program.MaxFileSize);
+            var uploadStream = new MemoryStream();
+            var dataStream = new MemoryStream();
+            byte[] buffer = new byte[rs.Length];
 
-            if (Encrypted)
+            while (await rs.ReadAsync(buffer, 0, (int)rs.Length) is int read && read > 0)
             {
-                var ms = new MemoryStream();
-                using var rs = file.OpenReadStream(MaxSize);
-
-                byte[] buffer = new byte[rs.Length];
-                while (await rs.ReadAsync(buffer, 0, (int)rs.Length) is int read && read > 0)
-                {
-                    UploadedBytes += read;
-                    ms.Write(buffer, 0, read);
-                }
-
-                var fs = new FileStream(path, FileMode.Create);
-                await Program.Compressor.CompressStreamAsync(ms, fs, pass);
-                fs.Close();
-            }
-            else
-            {
-                var fs = new FileStream(path, FileMode.Create);
-                using var rs = file.OpenReadStream(MaxSize);
-
-                byte[] buffer = new byte[rs.Length];
-                while (await rs.ReadAsync(buffer, 0, (int)rs.Length) is int read && read > 0)
-                {
-                    UploadedBytes += read;
-                    fs.Write(buffer, 0, read);
-                }
-                fs.Close();
+                UploadedBytes += read;
+                uploadStream.Write(buffer, 0, read);
             }
 
+            uploadStream.Position = 0;
+
+            if (Encrypted) await Program.Compressor.CompressStreamAsync(uploadStream, dataStream, Password);
+            else await Program.Compressor.CompressStreamAsync(uploadStream, dataStream);
+
+
+            drgnfile.Write(dataStream);
+
+            dataStream.Close();
+            uploadStream.Close();
         }
         catch (Exception ex)
         {
             ErrorMsg = ex.Message;
 
-            timer.Dispose();
-            File.Delete(path);
+            Timer?.Dispose();
+            if (File.Exists(FilePath)) File.Delete(FilePath);
+
             Uploading = false;
+            Finished = true;
             return;
         }
-
-        timer.Dispose();
-
-        if (Encrypted)
+        finally
         {
-            LinkToFile = Utils.GenLink($"files/{id}?key={pass}");
+            drgnfile.Save(FilePath);
         }
-        else
-        {
-            LinkToFile = Utils.GenLink($"files/{id}");
-        }
+    }
+
+    public async void CopyToClipboard()
+    {
+        if (Encrypted) LinkToFile = Utils.GenLink($"files/{FileName}?key={Password}");
+        else LinkToFile = Utils.GenLink($"files/{FileName}");
 
         if (await JS.InvokeAsync<bool>("document.hasFocus"))
         {
@@ -177,9 +205,5 @@
         {
             AutoCopied = false;
         }
-
-        Uploading = false;
-        FileSize = 0;
-        UploadedBytes = 0;
     }
 }

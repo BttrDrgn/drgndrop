@@ -39,3 +39,6 @@ C:\Users\Drgn\Desktop\Development\drgndrop\src\drgndrop\drgndrop\bin\Debug\net7.
 C:\Users\Drgn\Desktop\Development\drgndrop\src\drgndrop\drgndrop\bin\Debug\net7.0\7z64.dll
 C:\Users\Drgn\Desktop\Development\drgndrop\src\drgndrop\drgndrop\bin\Debug\net7.0\SevenZipSharp.pdb
 C:\Users\Drgn\Desktop\Development\drgndrop\src\drgndrop\drgndrop\bin\Debug\net7.0\SevenZipSharp.xml
+C:\Users\Drgn\Desktop\Development\drgndrop\src\drgndrop\drgndrop\bin\Debug\net7.0\MessagePack.dll
+C:\Users\Drgn\Desktop\Development\drgndrop\src\drgndrop\drgndrop\bin\Debug\net7.0\MessagePack.Annotations.dll
+C:\Users\Drgn\Desktop\Development\drgndrop\src\drgndrop\drgndrop\bin\Debug\net7.0\Microsoft.NET.StringTools.dll
