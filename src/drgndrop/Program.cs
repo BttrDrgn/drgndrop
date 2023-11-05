@@ -133,7 +133,7 @@ namespace drgndrop
 
                 UploadPath = toml.Get("file", "uploadpath", Path.Combine("C:", "drgndrop", "upload"));
                 TempPath = toml.Get("file", "temppath", Path.Combine("C:", "drgndrop", "temp"));
-                LibPath = toml.Get("file", "libppath", Path.Combine("C:", "drgndrop", "lib"));
+                LibPath = toml.Get("file", "libpath", Path.Combine("C:", "drgndrop", "lib"));
             }
             else
             {
