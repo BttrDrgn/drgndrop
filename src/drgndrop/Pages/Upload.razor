@@ -129,7 +129,7 @@
         Uploading = true;
 
         var fs = new FileStream(FilePath, FileMode.Create);
-        var rs = DroppedFile.OpenReadStream(Program.MaxFileSize);
+        Stream rs = null;
         var us = new MemoryStream();
         var compressor = new SevenZipCompressor();
 
@@ -140,6 +140,8 @@
                 ErrorMsg = $"One or more file sizes are too big ({DroppedFile.Name})! The size limit is {Utils.BytesToMB(Program.MaxFileSize)} MB per file.";
                 throw new InvalidOperationException(ErrorMsg);
             }
+
+            rs = DroppedFile.OpenReadStream(Program.MaxFileSize);
 
             byte[] buffer = new byte[rs.Length];
             while (await rs.ReadAsync(buffer, 0, (int)rs.Length) is int read && read > 0)
