@@ -58,6 +58,11 @@ namespace drgndrop
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");
 
+            app.MapGet("/src", async (HttpContext ctx) =>
+            {
+                ctx.Response.Redirect("https://github.com/BttrDrgn/drgndrop", true);
+            });
+
             app.MapGet("/files/{path}", async (HttpContext ctx, string path) =>
             {
                 try
