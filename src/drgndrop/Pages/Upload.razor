@@ -1,0 +1,198 @@
+﻿@page "/upload"
+@using drgndrop;
+@using SevenZip;
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavManager
+@inject IClipboardService ClipboardService
+@inject IJSRuntime JS
+
+<PageTitle>Upload</PageTitle>
+
+<div class="container-fluid">
+    @{
+        if(!Finished)
+        {
+            if (!Uploading)
+            {
+                <form>
+                    <div class="form-group">
+                        <InputFile OnChange="@UploadFiles" />
+                    </div>
+                    <div class="form-group form-check">
+                        <input class="form-check-input" type="checkbox" id="encrypt" @bind="@Encrypted" />
+                        <label class="form-check-label" for="encrypt">Encrypt</label>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <LoadingTemplate>
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Uploading...
+                </LoadingTemplate>
+
+                <div class="new-line"></div>
+                <p>@(Utils.BytesToMB(UploadedBytes, 2))MB / @(Utils.BytesToMB(DroppedFile.Size, 2))MB</p>
+            }
+        }
+    }
+
+    @if (Errored)
+    {
+        <p>Error: @ErrorMsg</p>
+    }
+
+    @if(Finished)
+    {
+        @if (!Errored)
+        {
+            @if(AutoCopied){ <p>Link automatically copied to clipboard</p> }
+            <input type="text" id="link" @bind="@LinkToFile" size="64" readonly />
+        }
+
+        @if(!Uploading)
+        {
+            <div class="new-line"></div>
+            <button onclick="@ResetState">Upload Another</button>
+        }
+    }
+</div>
+
+
+@code
+{
+    public string ErrorMsg = "";
+    public bool Errored => ErrorMsg != "";
+    public bool Uploading = false;
+    private bool Encrypted = true;
+    private int UploadedBytes = 0;
+    private string LinkToFile = "";
+    private bool AutoCopied = false;
+    public bool Finished = false;
+    public IBrowserFile DroppedFile = null;
+
+    public string FileID = "";
+    public string FileExt => Utils.GetExtension(DroppedFile.Name);
+    public string FileName => $"{FileID}.{FileExt}";
+    public string Password = "";
+    public string FilePath => Path.Combine(Program.UploadPath, FileName);
+    public Timer Timer = null;
+
+    public void ResetState()
+    {
+        AutoCopied = false;
+        ErrorMsg = "";
+        Uploading = false;
+        Finished = false;
+        UploadedBytes = 0;
+
+        DroppedFile = null;
+
+        Password = "";
+    }
+
+    async Task UploadFiles(InputFileChangeEventArgs e)
+    {
+        ResetState();
+
+        var files = e.GetMultipleFiles();
+
+        if(files.Count > 1)
+        {
+            ErrorMsg = $"Currently only one file per upload is allowed!";
+            Uploading = false;
+            return;
+        }
+
+        DroppedFile = files[0];
+
+        await using var Timer = new Timer(_ => InvokeAsync(() => StateHasChanged()));
+        Timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
+
+        GenerateNewFile();
+        ProcessFile();
+        CopyToClipboard();
+
+        Timer.Dispose();
+        Uploading = false;
+        Finished = true;
+    }
+
+    public void GenerateNewFile()
+    {
+        FileID = Utils.GenID();
+        if (Encrypted) Password = Utils.GenPass();
+    }
+
+    public async void ProcessFile()
+    {
+        Uploading = true;
+
+        var fs = new FileStream(FilePath, FileMode.Create);
+        var rs = DroppedFile.OpenReadStream(Program.MaxFileSize);
+        var us = new MemoryStream();
+        var compressor = new SevenZipCompressor();
+
+        try
+        {
+            if (DroppedFile.Size >= Program.MaxFileSize)
+            {
+                ErrorMsg = $"One or more file sizes are too big ({DroppedFile.Name})! The size limit is {Utils.BytesToMB(Program.MaxFileSize)} MB per file.";
+                throw new InvalidOperationException(ErrorMsg);
+            }
+
+            byte[] buffer = new byte[rs.Length];
+            while (await rs.ReadAsync(buffer, 0, (int)rs.Length) is int read && read > 0)
+            {
+                UploadedBytes += read;
+                us.Write(buffer, 0, read);
+            }
+
+            if (Encrypted) await compressor.CompressStreamAsync(us, fs, Password);
+            else await compressor.CompressStreamAsync(us, fs);
+        }
+        catch (Exception ex)
+        {
+            fs?.Dispose();
+            us?.Dispose();
+            rs?.Dispose();
+
+            ErrorMsg = ex.Message;
+
+            if (File.Exists(FilePath)) File.Delete(FilePath);
+
+            Uploading = false;
+            Finished = true;
+        }
+        finally
+        {
+            fs?.Dispose();
+            us?.Dispose();
+            rs?.Dispose();
+        }
+    }
+
+    public async void CopyToClipboard()
+    {
+        if (Encrypted) LinkToFile = Utils.GenLink($"files/{FileName}?key={Password}");
+        else LinkToFile = Utils.GenLink($"files/{FileName}");
+
+        if (await JS.InvokeAsync<bool>(document.hasFocus))
+        {
+            try
+            {
+                await ClipboardService.CopyToClipboard(LinkToFile);
+                AutoCopied = true;
+            }
+            catch (Exception ex)
+            {
+                ErrorMsg = "Access denied to clipboard! Must manually copy.";
+                AutoCopied = false;
+            }
+        }
+        else
+        {
+            AutoCopied = false;
+        }
+    }
+}

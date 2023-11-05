@@ -1,0 +1,8 @@
+[host]
+appname = "Drgndrop"
+domain = "drgndrop.me"
+[file]
+maxfilesize = 50 # in MB
+uploadpath = "C:/drgndrop/uploads/"
+temppath = "C:/drgndrop/temp/"
+libpath = "C:/drgndrop/lib/"
