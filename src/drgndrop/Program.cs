@@ -58,6 +58,11 @@ namespace drgndrop
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");
 
+            app.MapGet("/", async (HttpContext ctx) =>
+            {
+                ctx.Response.Redirect("/upload", true);
+            });
+
             app.MapGet("/src", async (HttpContext ctx) =>
             {
                 ctx.Response.Redirect("https://github.com/BttrDrgn/drgndrop", true);
@@ -65,19 +70,44 @@ namespace drgndrop
 
             app.MapGet("/files/{path}", async (HttpContext ctx, string path) =>
             {
-                try
-                {
-                    string filePath = Path.Combine(UploadPath, path);
-                    bool exists = File.Exists(filePath);
+                string filePath = Path.Combine(UploadPath, path);
+                bool exists = File.Exists(filePath);
+                bool isDiscord = false;
 
-                    if(!exists)
+                if ( ctx.Request.Headers.TryGetValue("User-Agent", out var userAgent) )
+                {
+                    isDiscord = userAgent.Contains("Discordbot");
+                }
+
+                if (!exists)
+                {
+                    if (isDiscord)
+                    {
+                        //Discord embed for not found maybe
+                        return Results.Text("File not found");
+                    }
+                    else
                     {
                         return Results.Text("File not found");
                     }
+                }
+                else
+                {
+                    if (isDiscord)
+                    {
+                        string html = Utils.GenerateFileMetaTags(path);
 
+                        return Results.Text(html, "text/html");
+                    }
+                }
+
+                try
+                {
                     var url = ctx.Request.GetDisplayUrl();
                     var splitUrl = url.Split('?');
+                    string mimeType = Utils.GetMIMEType(filePath);
                     bool isArchive = Utils.Is7zArchive(filePath);
+                    bool isMedia = Utils.IsMedia(mimeType);
 
                     //Drgnfile drgnfile = Drgnfile.Load(filePath);
 
@@ -101,11 +131,11 @@ namespace drgndrop
                         await extractor.ExtractFileAsync(0, temp);
                         temp.Close();
 
-                        return Results.Stream(File.OpenRead(tempPath), Utils.GetMIMEType(filePath));
+                        return Results.Stream(File.OpenRead(tempPath), mimeType);
                     }
                     else
                     {
-                        return Results.Stream(File.OpenRead(filePath), Utils.GetMIMEType(Path.GetFileName(filePath)));
+                        return Results.Stream(File.OpenRead(filePath), mimeType);
                     }
                 }
                 catch (Exception ex)

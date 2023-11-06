@@ -179,6 +179,7 @@ namespace drgndrop
             { ".oda", "application/oda" },
             { ".odc", "text/x-ms-odc" },
             { ".ods", "application/oleobject" },
+            { ".ogg", "audio/ogg" },
             { ".one", "application/onenote" },
             { ".onea", "application/onenote" },
             { ".onetoc", "application/onenote" },
@@ -307,6 +308,7 @@ namespace drgndrop
             { ".wbmp", "image/vnd.wap.wbmp" },
             { ".wcm", "application/vnd.ms-works" },
             { ".wdb", "application/vnd.ms-works" },
+            { ".webm", "video/webm" },
             { ".wks", "application/vnd.ms-works" },
             { ".wm", "video/x-ms-wm" },
             { ".wma", "audio/x-ms-wma" },
@@ -358,6 +360,18 @@ namespace drgndrop
             { ".xwd", "image/x-xwindowdump" },
             { ".z", "application/x-compress" },
             { ".zip", "application/x-zip-compressed" },
+        };
+
+        public static List<string> MediaTypes = new List<string>()
+        {
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "video/webm",
+            "video/mp4",
+            "audio/wav",
+            "audio/mpeg",
+            "audio/ogg",
         };
 
         public static string GetMIMEType(string file)
@@ -445,6 +459,11 @@ namespace drgndrop
             return header.Compare(ArchiveHeader);
         }
 
+        public static bool IsMedia(string mimetype)
+        {
+            return MediaTypes.Contains(mimetype.ToLower());
+        }
+
         public static bool Compare(this byte[] cmp0, byte[] cmp1)
         {
             if(cmp0.Length != cmp1.Length)
@@ -458,6 +477,26 @@ namespace drgndrop
             }
 
             return true;
+        }
+
+        public static string GenerateFileMetaTags(string fileName)
+        {
+            var template = new StreamReader(File.OpenRead("wwwroot/metaembed.html")).ReadToEnd();
+
+            StringWriter metaTags = new StringWriter();
+            metaTags.WriteLine(CreateMetaTag("og:url", $"https://{Program.DomainName}/"));
+            metaTags.WriteLine(CreateMetaTag("og:type", "website"));
+            metaTags.WriteLine(CreateMetaTag("og:title", $"{Program.AppName} - {fileName}"));
+            metaTags.WriteLine(CreateMetaTag("og:description", "FOSS privacy focused file sharing platform"));
+
+            template = template.Replace("@MetaTags", metaTags.ToString());
+
+            return template;
+        }
+
+        public static string CreateMetaTag(string property, string content)
+        {
+            return $"<meta property=\"{property}\" content=\"{content}\"/>";
         }
     }
 }
