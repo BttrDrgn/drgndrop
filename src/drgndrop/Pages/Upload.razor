@@ -9,31 +9,29 @@
 <PageTitle>Upload</PageTitle>
 
 <div class="container-fluid">
-    @{
-        if(!Finished)
+    @if(!Finished)
+    {
+        @if (!Uploading)
         {
-            if (!Uploading)
-            {
-                <form>
-                    <div class="form-group">
-                        <InputFile OnChange="@UploadFiles" />
-                    </div>
-                    <div class="form-group form-check">
-                        <input class="form-check-input" type="checkbox" id="encrypt" @bind="@Encrypted" />
-                        <label class="form-check-label" for="encrypt">Encrypt</label>
-                    </div>
-                </form>
-            }
-            else
-            {
-                <LoadingTemplate>
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Uploading...
-                </LoadingTemplate>
+            <form>
+                <div class="form-group">
+                    <InputFile OnChange="@UploadFiles" />
+                </div>
+                <div class="form-group form-check">
+                    <input class="form-check-input" type="checkbox" id="encrypt" @bind="@Encrypted" />
+                    <label class="form-check-label" for="encrypt">Encrypt</label>
+                </div>
+            </form>
+        }
+        else
+        {
+            <LoadingTemplate>
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Uploading...
+            </LoadingTemplate>
 
-                <div class="new-line"></div>
-                <p>@(Utils.BytesToMB(UploadedBytes, 2))MB / @(Utils.BytesToMB(DroppedFile.Size, 2))MB</p>
-            }
+            <div class="new-line"></div>
+            <p>@(Utils.BytesToMB(UploadedBytes, 2))MB / @(Utils.BytesToMB(DroppedFile.Size, 2))MB</p>
         }
     }
 
@@ -47,11 +45,11 @@
         @if (!Errored)
         {
             @if(AutoCopied){ <p>Link automatically copied to clipboard</p> }
-            <input type="text" id="link" @bind="@LinkToFile" size="64" readonly />
         }
 
         @if(!Uploading)
         {
+            <input type="text" id="link" @bind="@LinkToFile" size="64" readonly />
             <div class="new-line"></div>
             <button onclick="@ResetState">Upload Another</button>
         }
@@ -110,7 +108,7 @@
         Timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
 
         GenerateNewFile();
-        ProcessFile();
+        await ProcessFile();
         CopyToClipboard();
 
         Timer.Dispose();
@@ -124,7 +122,7 @@
         if (Encrypted) Password = Utils.GenPass();
     }
 
-    public async void ProcessFile()
+    public async Task ProcessFile()
     {
         Uploading = true;
 
@@ -147,7 +145,7 @@
             while (await rs.ReadAsync(buffer, 0, (int)rs.Length) is int read && read > 0)
             {
                 UploadedBytes += read;
-                us.Write(buffer, 0, read);
+                await us.WriteAsync(buffer, 0, read);
             }
 
             if (Encrypted) await compressor.CompressStreamAsync(us, fs, Password);
