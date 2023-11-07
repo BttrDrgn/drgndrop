@@ -9,6 +9,7 @@ namespace drgndrop
         public string Name { get; set; }
         public long Creation { get; set; }
         public string PasswordHash { get; set; }
+        public bool IsEncrypted => PasswordHash != "";
     }
 
     public class Drgnfile

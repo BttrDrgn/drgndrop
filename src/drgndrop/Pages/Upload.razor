@@ -120,7 +120,7 @@
         FileID = Utils.GenID();
         if (Encrypted) Password = Utils.GenPass();
 
-        return new Drgnfile(DroppedFile.Name, "");
+        return new Drgnfile(DroppedFile.Name, Password);
     }
 
     public async Task ProcessFile(Drgnfile drgnfile)

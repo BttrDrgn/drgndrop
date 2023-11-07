@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.Extensions;
 using SevenZip;
+using Crypt = BCrypt.Net.BCrypt;
 
 namespace drgndrop
 {
@@ -99,21 +100,28 @@ namespace drgndrop
 
                     var url = ctx.Request.GetDisplayUrl();
                     var splitUrl = url.Split('?');
+                    var key = splitUrl.Length > 1 ? Utils.GetQuery(in splitUrl[1], "key") : "";
+                    var passwordCheck = drgnfile.IsEncrypted ? Crypt.EnhancedVerify(key, drgnfile.PasswordHash) : true;
+
+                    Console.WriteLine($"{key} : {drgnfile.PasswordHash}");
+
+                    if (!passwordCheck)
+                    {
+                        return Results.Text("Wrong password", statusCode: 401);
+                    }
+
                     string mimeType = Utils.GetMIMEType(drgnfile.Name);
                     bool isMedia = Utils.IsMedia(mimeType);
 
                     SevenZipExtractor extractor;
 
                     var dataPath = Path.Combine(filePath, "data");
-                    if (splitUrl.Length > 1)
+
+                    if (drgnfile.IsEncrypted && key != "")
                     {
-                        var key = Utils.GetQuery(in splitUrl[1], "key");
                         extractor = new SevenZipExtractor(dataPath, key);
                     }
-                    else
-                    {
-                        extractor = new SevenZipExtractor(dataPath);
-                    }
+                    else extractor = new SevenZipExtractor(dataPath);
 
                     FileStream temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite);
                     File.SetAttributes(temp.SafeFileHandle, FileAttributes.Hidden);
