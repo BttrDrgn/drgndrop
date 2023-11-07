@@ -8,7 +8,7 @@ namespace drgndrop
         public static Random Rand = new Random(Guid.NewGuid().GetHashCode());
 
         public static int IDLen = 6;
-        public static int PassLen = 32;
+        public static int PassLen => Rand.Next(26, 32);
         public static string Chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         public static byte[] ArchiveHeader = new byte[4] { 0x37, 0x7A, 0xBC, 0xAF };
 
