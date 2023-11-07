@@ -71,9 +71,8 @@
 
     public string FileID = "";
     public string FileExt => Utils.GetExtension(DroppedFile.Name);
-    public string FileName => $"{FileID}.{FileExt}";
     public string Password = "";
-    public string FilePath => Path.Combine(Program.UploadPath, FileName);
+    public string FilePath => Path.Combine(Program.UploadPath, FileID);
     public Timer Timer = null;
 
     public void ResetState()
@@ -107,8 +106,8 @@
         await using var Timer = new Timer(_ => InvokeAsync(() => StateHasChanged()));
         Timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
 
-        GenerateNewFile();
-        await ProcessFile();
+        var drgnfile = GenerateNewFile();
+        await ProcessFile(drgnfile);
         CopyToClipboard();
 
         Timer.Dispose();
@@ -116,19 +115,22 @@
         Finished = true;
     }
 
-    public void GenerateNewFile()
+    public Drgnfile GenerateNewFile()
     {
         FileID = Utils.GenID();
         if (Encrypted) Password = Utils.GenPass();
+
+        return new Drgnfile(DroppedFile.Name, "");
     }
 
-    public async Task ProcessFile()
+    public async Task ProcessFile(Drgnfile drgnfile)
     {
         Uploading = true;
 
-        var fs = new FileStream(FilePath, FileMode.Create);
+        //var fs = new FileStream(FilePath, FileMode.Create);
         Stream rs = null;
         var us = new MemoryStream();
+        var cs = new MemoryStream();
         var compressor = new SevenZipCompressor();
 
         try
@@ -148,12 +150,12 @@
                 await us.WriteAsync(buffer, 0, read);
             }
 
-            if (Encrypted) await compressor.CompressStreamAsync(us, fs, Password);
-            else await compressor.CompressStreamAsync(us, fs);
+            if (Encrypted) await compressor.CompressStreamAsync(us, cs, Password);
+            else await compressor.CompressStreamAsync(us, cs);
         }
         catch (Exception ex)
         {
-            fs?.Dispose();
+            cs?.Dispose();
             us?.Dispose();
             rs?.Dispose();
 
@@ -166,16 +168,18 @@
         }
         finally
         {
-            fs?.Dispose();
+            await drgnfile.Save(FilePath, cs);
+
             us?.Dispose();
             rs?.Dispose();
+            cs?.Dispose();
         }
     }
 
     public async void CopyToClipboard()
     {
-        if (Encrypted) LinkToFile = Utils.GenLink($"files/{FileName}?key={Password}");
-        else LinkToFile = Utils.GenLink($"files/{FileName}");
+        if (Encrypted) LinkToFile = Utils.GenLink($"files/{FileID}?key={Password}");
+        else LinkToFile = Utils.GenLink($"files/{FileID}");
 
         if (await JS.InvokeAsync<bool>(document.hasFocus))
         {

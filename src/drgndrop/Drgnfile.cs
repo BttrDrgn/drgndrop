@@ -1,73 +1,60 @@
-﻿
-using MessagePack;
+﻿using System.Runtime.Serialization.Formatters.Binary;
+using Crypt = BCrypt.Net.BCrypt;
+using System.Text.Json;
 
 namespace drgndrop
 {
-    //Ex:
+    public class DrgnfileInfo
+    {
+        public string Name { get; set; }
+        public long Creation { get; set; }
+        public string PasswordHash { get; set; }
+    }
 
-    // 1698259224
-    // .png
-    // $2a$12$Y4YlamrY6U.e/b/jRh6QG.X/w7m/XMd08bP4bBNzJ/J1ZG8jEM0py
-    // 0x00 0x00 0x00...
-
-    [MessagePackObject]
     public class Drgnfile
     {
-        [Key(0)] public string Name { get; set; }
-        [Key(1)] public long Creation { get; set; }
-        [Key(2)] public string PasswordHash { get; set; } //Bcrypt hash
-        [Key(3)] public byte[] Data { get; set; }
+        public DrgnfileInfo Info;
 
-        public Drgnfile(string name, string passwordHash)
+        public Drgnfile(string name, string password)
         {
-            Name = name;
-            PasswordHash = passwordHash;
+            Info = new DrgnfileInfo();
 
-            Creation = DateTimeOffset.Now.ToUnixTimeSeconds();
+            Info.Name = name;
+            Info.PasswordHash = Crypt.EnhancedHashPassword(password);
+            Info.Creation = DateTimeOffset.Now.ToUnixTimeSeconds();
         }
 
-        public Drgnfile(string name, long creation, string passwordHash, byte[] data)
+        public async Task Save(string file, Stream data)
         {
-            Name = name;
-            Creation = creation;
-            PasswordHash = passwordHash;
-            Data = data;
-        }
+            Directory.CreateDirectory(file);
 
-        public void Write(Stream stream)
-        {
-            List<byte> totalStream = new();
-            byte[] buffer = new byte[32];
-            int read;
+            FileStream infoFs = new FileStream(Path.Combine(file, "info"), FileMode.Create, FileAccess.ReadWrite);
+            JsonSerializer.Serialize(infoFs, Info);
+            infoFs.Close();
 
-            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+            FileStream dataFs = new FileStream(Path.Combine(file, "data"), FileMode.Create, FileAccess.ReadWrite);
+
+            data.Position = 0;
+            byte[] buffer = new byte[data.Length];
+            while (await data.ReadAsync(buffer, 0, (int)data.Length) is int read && read > 0)
             {
-                totalStream.AddRange(buffer.Take(read));
+                await dataFs.WriteAsync(buffer, 0, read);
             }
 
-            Data = totalStream.ToArray();
+            dataFs.Close();
         }
 
-        public MemoryStream DataDump()
+        public static DrgnfileInfo? Load(string file, Stream dataStream)
         {
-            MemoryStream data = new MemoryStream();
-            data.Write(Data, 0, Data.Length);
-            return data;
+            DrgnfileInfo? info = Load(file);
+            dataStream = File.OpenRead(Path.Combine(file, "data"));
+            return info;
         }
 
-        public void Save(string file)
+        public static DrgnfileInfo? Load(string file)
         {
-            FileStream fs = new FileStream(file, FileMode.Create, FileAccess.Write);
-            MessagePackSerializer.Serialize(fs, this);
-            fs.Close();
-        }
-
-        public static Drgnfile Load(string file)
-        {
-            FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read);
-            var retn = MessagePackSerializer.Deserialize<Drgnfile>(fs);
-            fs.Close();
-            return retn;
+            DrgnfileInfo? info = JsonSerializer.Deserialize<DrgnfileInfo>(File.OpenRead(Path.Combine(file, "info")));
+            return info;
         }
     }
 }

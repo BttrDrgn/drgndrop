@@ -1,14 +1,5 @@
-using drgndrop;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Net.Http.Headers;
 using SevenZip;
-using Tomlyn;
 
 namespace drgndrop
 {
@@ -26,8 +17,6 @@ namespace drgndrop
         public static void Main(string[] args)
         {
             Initialize();
-
-            SevenZipBase.SetLibraryPath(Path.Combine(LibPath, "7z", "x64", "7za.dll"));
 
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddRazorPages();
@@ -71,7 +60,8 @@ namespace drgndrop
             app.MapGet("/files/{path}", async (HttpContext ctx, string path) =>
             {
                 string filePath = Path.Combine(UploadPath, path);
-                bool exists = File.Exists(filePath);
+
+                bool exists = Directory.Exists(filePath);
                 bool isDiscord = false;
 
                 if ( ctx.Request.Headers.TryGetValue("User-Agent", out var userAgent) )
@@ -101,42 +91,36 @@ namespace drgndrop
                     }
                 }
 
+                var tempPath = Path.Combine(TempPath, $".{Utils.GenID()}.tmp");
+
                 try
                 {
+                    DrgnfileInfo? drgnfile = Drgnfile.Load(filePath);
+
                     var url = ctx.Request.GetDisplayUrl();
                     var splitUrl = url.Split('?');
-                    string mimeType = Utils.GetMIMEType(filePath);
-                    bool isArchive = Utils.Is7zArchive(filePath);
+                    string mimeType = Utils.GetMIMEType(drgnfile.Name);
                     bool isMedia = Utils.IsMedia(mimeType);
 
-                    //Drgnfile drgnfile = Drgnfile.Load(filePath);
+                    SevenZipExtractor extractor;
 
-                    if (isArchive)
+                    var dataPath = Path.Combine(filePath, "data");
+                    if (splitUrl.Length > 1)
                     {
-                        SevenZipExtractor extractor;
-
-                        if (splitUrl.Length > 1)
-                        {
-                            var key = Utils.GetQuery(in splitUrl[1], "key");
-                            extractor = new SevenZipExtractor(filePath, key);
-                        }
-                        else
-                        {
-                            extractor = new SevenZipExtractor(filePath);
-                        }
-
-                        var tempPath = Path.Combine(TempPath, $".{Utils.GenID()}.tmp");
-                        FileStream temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite);
-                        File.SetAttributes(temp.SafeFileHandle, FileAttributes.Hidden);
-                        await extractor.ExtractFileAsync(0, temp);
-                        temp.Close();
-
-                        return Results.Stream(File.OpenRead(tempPath), mimeType);
+                        var key = Utils.GetQuery(in splitUrl[1], "key");
+                        extractor = new SevenZipExtractor(dataPath, key);
                     }
                     else
                     {
-                        return Results.Stream(File.OpenRead(filePath), mimeType);
+                        extractor = new SevenZipExtractor(dataPath);
                     }
+
+                    FileStream temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite);
+                    File.SetAttributes(temp.SafeFileHandle, FileAttributes.Hidden);
+                    await extractor.ExtractFileAsync(0, temp);
+                    await temp.DisposeAsync();
+
+                    return Results.Stream(File.OpenRead(tempPath), mimeType);
                 }
                 catch (Exception ex)
                 {
@@ -149,6 +133,8 @@ namespace drgndrop
 
         private static void Initialize()
         {
+            FlushTempCache();
+
             string path = "config.toml";
             if (File.Exists(path))
             {
@@ -180,6 +166,19 @@ namespace drgndrop
                 writer.WriteLine($"libpath = \"C:/drgndrop/lib/\"");
 
                 writer.Close();
+            }
+
+            SevenZipBase.SetLibraryPath(Path.Combine(LibPath, "7z", "x64", "7za.dll"));
+        }
+
+        public static void FlushTempCache()
+        {
+            foreach (var file in Directory.GetFiles(TempPath))
+            {
+                if (!Utils.IsFileLocked(file))
+                {
+                    File.Delete(file);
+                }
             }
         }
     }

@@ -498,5 +498,20 @@ namespace drgndrop
         {
             return $"<meta property=\"{property}\" content=\"{content}\"/>";
         }
+
+        public static bool IsFileLocked(string path)
+        {
+            try
+            {
+                var _ = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
+                _.Dispose();
+            }
+            catch (Exception ex)
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }
