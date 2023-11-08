@@ -75,11 +75,11 @@ namespace drgndrop
                     if (isDiscord)
                     {
                         //Discord embed for not found maybe
-                        return Results.Text("File not found");
+                        return Results.Text("File not found", statusCode: 404);
                     }
                     else
                     {
-                        return Results.Text("File not found");
+                        return Results.Text("File not found", statusCode: 404);
                     }
                 }
                 else
@@ -97,13 +97,12 @@ namespace drgndrop
                 try
                 {
                     DrgnfileInfo? drgnfile = Drgnfile.Load(filePath);
+                    if(drgnfile == null) return Results.Text("File not found", statusCode: 404);
 
                     var url = ctx.Request.GetDisplayUrl();
                     var splitUrl = url.Split('?');
                     var key = splitUrl.Length > 1 ? Utils.GetQuery(in splitUrl[1], "key") : "";
                     var passwordCheck = drgnfile.IsEncrypted ? Crypt.EnhancedVerify(key, drgnfile.PasswordHash) : true;
-
-                    Console.WriteLine($"{key} : {drgnfile.PasswordHash}");
 
                     if (!passwordCheck)
                     {
@@ -117,10 +116,7 @@ namespace drgndrop
 
                     var dataPath = Path.Combine(filePath, "data");
 
-                    if (drgnfile.IsEncrypted && key != "")
-                    {
-                        extractor = new SevenZipExtractor(dataPath, key);
-                    }
+                    if (drgnfile.IsEncrypted && key != "") extractor = new SevenZipExtractor(dataPath, key);
                     else extractor = new SevenZipExtractor(dataPath);
 
                     FileStream temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite);
@@ -128,7 +124,7 @@ namespace drgndrop
                     await extractor.ExtractFileAsync(0, temp);
                     await temp.DisposeAsync();
 
-                    return Results.Stream(File.OpenRead(tempPath), mimeType);
+                    return Results.Stream(File.OpenRead(tempPath), mimeType, drgnfile.Name);
                 }
                 catch (Exception ex)
                 {
