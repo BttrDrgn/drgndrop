@@ -60,6 +60,7 @@ namespace drgndrop
 
             app.MapGet("/files/{path}", async (HttpContext ctx, string path) =>
             {
+
                 string filePath = Path.Combine(UploadPath, path);
 
                 bool exists = Directory.Exists(filePath);
@@ -115,7 +116,6 @@ namespace drgndrop
                     SevenZipExtractor extractor;
 
                     var dataPath = Path.Combine(filePath, "data");
-
                     if (drgnfile.IsEncrypted && key != "") extractor = new SevenZipExtractor(dataPath, key);
                     else extractor = new SevenZipExtractor(dataPath);
 
@@ -124,7 +124,9 @@ namespace drgndrop
                     await extractor.ExtractFileAsync(0, temp);
                     await temp.DisposeAsync();
 
-                    return Results.Stream(File.OpenRead(tempPath), mimeType, drgnfile.Name);
+                    ctx.Response.Headers.Add("Content-Disposition", $"inline; filename=\"{drgnfile.Name}\"");
+                    Results.StatusCode(200);
+                    return Results.Stream(File.OpenRead(tempPath), mimeType);
                 }
                 catch (Exception ex)
                 {
