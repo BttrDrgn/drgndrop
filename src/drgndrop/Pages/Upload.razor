@@ -180,7 +180,7 @@
         if (Encrypted) LinkToFile = Utils.GenLink($"files/{FileID}?key={Password}");
         else LinkToFile = Utils.GenLink($"files/{FileID}");
 
-        if (await JS.InvokeAsync<bool>(document.hasFocus))
+        if (await JS.InvokeAsync<bool>("document.hasFocus"))
         {
             try
             {

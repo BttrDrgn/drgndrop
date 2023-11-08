@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 
 <PageTitle>drgndrop</PageTitle>
 
@@ -10,7 +11,7 @@
 
     <main>
         <div class="top-row px-4 text-left fixed-top">
-
+            @Title
         </div>
 
         <article class="content px-4">
@@ -18,3 +19,32 @@
         </article>
     </main>
 </div>
+
+@code {
+
+    public static string Title = "";
+    public static bool Ready = false;
+
+    protected override void OnInitialized()
+    {
+        Title = Utils.PageHeaders[Utils.GetRootPath(NavManager.Uri).ToLower()];
+        NavManager.LocationChanged += LocationChanged;
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) 
+        {
+            //await SetTitle();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async void LocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        Title = Utils.PageHeaders[Utils.GetRootPath(e.Location).ToLower()];
+        StateHasChanged();
+    }
+}

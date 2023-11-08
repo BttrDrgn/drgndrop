@@ -12,6 +12,13 @@ namespace drgndrop
         public static string Chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         public static byte[] ArchiveHeader = new byte[4] { 0x37, 0x7A, 0xBC, 0xAF };
 
+        public static Dictionary<string, string> PageHeaders = new()
+        {
+            { "/", "Upload" },
+            { "/upload", "Upload" },
+            { "/home", "Home" },
+        };
+
         public static Dictionary<string, string> MIMETypes = new()
         {
             { ".323", "text/h323" },
@@ -512,6 +519,21 @@ namespace drgndrop
             }
 
             return false;
+        }
+
+        public static string GetRootPath(string url)
+        {
+            try
+            {
+                bool prefix = url.StartsWith("http");
+
+                string[] split = url.Split('/');
+                return $"/{split[prefix ? 3 : 1]}";
+            }
+            catch (Exception ex)
+            {
+                return "";
+            }
         }
     }
 }
