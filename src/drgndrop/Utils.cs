@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Linq.Expressions;
 using System.Web;
 
 namespace drgndrop
@@ -6,6 +7,9 @@ namespace drgndrop
     public static class Utils
     {
         public static Random Rand = new Random(Guid.NewGuid().GetHashCode());
+
+        public static string GithubRepo = "https://github.com/BttrDrgn/drgndrop";
+        public static List<string> GithubCommits = new List<string>();
 
         public static int IDLen = 6;
         public static int PassLen => Rand.Next(26, 32);
@@ -486,24 +490,38 @@ namespace drgndrop
             return true;
         }
 
-        public static string GenerateFileMetaTags(string fileName)
+        public static string GenerateFileMetaTags(string fileName, string password = "", DrgnfileInfo? drgnfile = null)
         {
             var template = new StreamReader(File.OpenRead("wwwroot/metaembed.html")).ReadToEnd();
 
             StringWriter metaTags = new StringWriter();
-            metaTags.WriteLine(CreateMetaTag("og:url", $"https://{Program.DomainName}/"));
-            metaTags.WriteLine(CreateMetaTag("og:type", "website"));
-            metaTags.WriteLine(CreateMetaTag("og:title", $"{Program.AppName} - {fileName}"));
-            metaTags.WriteLine(CreateMetaTag("og:description", "FOSS privacy focused file sharing platform"));
+
+            if(drgnfile != null)
+            {
+                metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"Drgndrop - {drgnfile.Name}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"https://drgndrop.me/files/{fileName}?key={password}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:description", $"Created: {drgnfile.Creation}\nTest: A"));
+                metaTags.WriteLine("\t" + CreateMetaTag("theme-color", "#0A60B0"));
+            }
+            else
+            {
+                metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"Drgndrop - {fileName}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"https://drgndrop.me/files/{fileName}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:description", "FOSS privacy focused file sharing platform"));
+                metaTags.WriteLine("\t" + CreateMetaTag("theme-color", "#10357E"));
+            }
+
+            metaTags.WriteLine("\t" + CreateMetaTag("og:type", "website"));
+            metaTags.WriteLine("\t" + CreateMetaTag("og:image", ""));
 
             template = template.Replace("@MetaTags", metaTags.ToString());
 
             return template;
         }
 
-        public static string CreateMetaTag(string property, string content)
+        public static string CreateMetaTag(string value, string content)
         {
-            return $"<meta property=\"{property}\" content=\"{content}\"/>";
+            return $"<meta name=\"{value}\" content=\"{content}\"/>";
         }
 
         public static bool IsFileLocked(string path)
@@ -534,6 +552,22 @@ namespace drgndrop
             {
                 return "";
             }
+        }
+
+        public static async Task IvokeInterval(TimeSpan timeSpan, Action action)
+        {
+            var periodicTimer = new PeriodicTimer(timeSpan);
+            while (await periodicTimer.WaitForNextTickAsync())
+            {
+                action();
+            }
+        }
+
+        public static async Task GatherGitCommits()
+        {
+            GithubCommits.Clear();
+
+
         }
     }
 }

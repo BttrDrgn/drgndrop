@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.Extensions;
 using SevenZip;
+using System.IO;
 using Crypt = BCrypt.Net.BCrypt;
 
 namespace drgndrop
@@ -68,7 +69,7 @@ namespace drgndrop
 
                 if ( ctx.Request.Headers.TryGetValue("User-Agent", out var userAgent) )
                 {
-                    isDiscord = userAgent.Contains("Discordbot");
+                    isDiscord = userAgent.ToString().ToLower().Contains("discord");
                 }
 
                 if (!exists)
@@ -83,15 +84,6 @@ namespace drgndrop
                         return Results.Text("File not found", statusCode: 404);
                     }
                 }
-                else
-                {
-                    if (isDiscord)
-                    {
-                        string html = Utils.GenerateFileMetaTags(path);
-
-                        return Results.Text(html, "text/html");
-                    }
-                }
 
                 var tempPath = Path.Combine(TempPath, $".{Utils.GenID()}.tmp");
 
@@ -104,14 +96,29 @@ namespace drgndrop
                     var splitUrl = url.Split('?');
                     var key = splitUrl.Length > 1 ? Utils.GetQuery(in splitUrl[1], "key") : "";
                     var passwordCheck = drgnfile.IsEncrypted ? Crypt.EnhancedVerify(key, drgnfile.PasswordHash) : true;
-
-                    if (!passwordCheck)
-                    {
-                        return Results.Text("Wrong password", statusCode: 401);
-                    }
-
                     string mimeType = Utils.GetMIMEType(drgnfile.Name);
                     bool isMedia = Utils.IsMedia(mimeType);
+
+                    if (isDiscord)
+                    {
+                        string html = "";
+
+                        if(drgnfile.IsEncrypted)
+                        {
+                            if (passwordCheck) html = Utils.GenerateFileMetaTags(path, key, drgnfile);
+                            else html = Utils.GenerateFileMetaTags(path);
+                        }
+                        else html = Utils.GenerateFileMetaTags(path, drgnfile: drgnfile);
+
+                        return Results.Text(html, "text/html");
+                    }
+                    else
+                    {
+                        if(!passwordCheck)
+                        {
+                            return Results.Text("Wrong password", statusCode: 401);
+                        }
+                    }
 
                     SevenZipExtractor extractor;
 
@@ -139,7 +146,7 @@ namespace drgndrop
 
         private static void Initialize()
         {
-            FlushTempCache();
+            Utils.IvokeInterval(TimeSpan.FromSeconds(30), FlushTempCache);
 
             string path = "config.toml";
             if (File.Exists(path))
