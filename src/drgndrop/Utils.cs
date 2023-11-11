@@ -500,7 +500,7 @@ namespace drgndrop
             {
                 metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"Drgndrop - {drgnfile.Name}"));
                 metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"https://drgndrop.me/files/{fileName}?key={password}"));
-                metaTags.WriteLine("\t" + CreateMetaTag("og:description", $"Created: {drgnfile.Creation}\nTest: A"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:description", $"Created: {drgnfile.Creation}"));
                 metaTags.WriteLine("\t" + CreateMetaTag("theme-color", "#0A60B0"));
             }
             else
