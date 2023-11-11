@@ -99,7 +99,7 @@ namespace drgndrop
                     string mimeType = Utils.GetMIMEType(drgnfile.Name);
                     bool isMedia = Utils.IsMedia(mimeType);
 
-                    if (isDiscord)
+                    if (isDiscord && !isMedia)
                     {
                         string html = "";
 
