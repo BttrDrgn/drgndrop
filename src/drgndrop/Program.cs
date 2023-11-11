@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http.Extensions;
 using SevenZip;
 using System.IO;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using Crypt = BCrypt.Net.BCrypt;
 
 namespace drgndrop
@@ -99,16 +101,26 @@ namespace drgndrop
                     string mimeType = Utils.GetMIMEType(drgnfile.Name);
                     bool isMedia = Utils.IsMedia(mimeType);
 
-                    if (isDiscord && !isMedia)
+                    if (isDiscord)
                     {
                         string html = "";
 
-                        if(drgnfile.IsEncrypted)
+                        if (drgnfile.IsEncrypted)
                         {
-                            if (passwordCheck) html = Utils.GenerateFileMetaTags(path, key, drgnfile);
-                            else html = Utils.GenerateFileMetaTags(path);
+                            if (passwordCheck)
+                            {
+                                if (isMedia) goto render;
+                                html = Utils.GenerateFileMetaTags(path, key, drgnfile);
+                            }
+                            else
+                            {
+                                html = Utils.GenerateFileMetaTags(path);
+                            }
                         }
-                        else html = Utils.GenerateFileMetaTags(path, drgnfile: drgnfile);
+                        else
+                        {
+                            html = Utils.GenerateFileMetaTags(path, drgnfile: drgnfile);
+                        }
 
                         return Results.Text(html, "text/html");
                     }
@@ -120,6 +132,7 @@ namespace drgndrop
                         }
                     }
 
+                render:
                     SevenZipExtractor extractor;
 
                     var dataPath = Path.Combine(filePath, "data");
