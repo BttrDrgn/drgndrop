@@ -1,0 +1,62 @@
+﻿@page "/register"
+@using drgndrop;
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<PageTitle>Register</PageTitle>
+
+<div class="container-fluid">
+    @if (ValidKey)
+    {
+        <form>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input class="form-control input-field" type="text" id="username" @bind="@Username" />
+            </div>
+            <div class="form-group">
+                <label for="username">Password</label>
+                <input class="form-control input-field" type="password" id="password" @bind="@Password" />
+            </div>
+            <button class="btn btn-primary">Submit</button>
+        </form>
+    }
+    else
+    {
+        <form>
+            <div class="form-group">
+                <label for="invite-key">Invite Key</label>
+                <input class="form-control input-field" type="text" id="invite-key" @bind="@InviteKey" />
+                <small id="invite-key-help" class="form-text text-muted">This is a unique key given to you by another member.</small>
+            </div>
+            <button class="btn btn-secondary">Submit</button>
+        </form>
+    }
+</div>
+
+@code
+{
+    public bool ValidKey = false;
+    public string InviteKey = "";
+    public string Username = "";
+    public string Password = "";
+
+    protected override void OnInitialized()
+    {
+        var splitUrl = NavManager.Uri.Split('?');
+        InviteKey = splitUrl.Length > 1 ? Utils.GetQuery(in splitUrl[1], "key") : "";
+
+        if (InviteKey != "")
+        {
+            ValidKey = CheckKey(InviteKey);
+        }
+
+        base.OnInitialized();
+    }
+
+    public bool CheckKey(string key)
+    {
+        //stub
+        return key != "";
+    }
+}

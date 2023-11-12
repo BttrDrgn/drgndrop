@@ -2,6 +2,28 @@
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 
+@if (MetaTags)
+{
+    <HeadContent>
+        <meta name="description" content="FOSS privacy focused file sharing platform">
+
+        <meta name="og:url" content="https://drgndrop.me">
+        <meta name="og:type" content="website">
+        <meta name="og:title" content="Drgndrop">
+        <meta name="og:description" content="FOSS privacy focused file sharing platform">
+        <meta name="og:image" content="">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:domain" content="drgndrop.me">
+        <meta name="twitter:url" content="https://drgndrop.me">
+        <meta name="twitter:title" content="Drgndrop">
+        <meta name="twitter:description" content="FOSS privacy focused file sharing platform">
+        <meta name="twitter:image" content="">
+
+        <meta name="theme-color" content="#0A60B0">
+    </HeadContent>
+}
+
 <PageTitle>drgndrop</PageTitle>
 
 <div class="page">
@@ -24,27 +46,25 @@
 
     public static string Title = "";
     public static bool Ready = false;
+    public bool MetaTags = false;
 
     protected override void OnInitialized()
     {
-        Title = Utils.PageHeaders[Utils.GetRootPath(NavManager.Uri).ToLower()];
+        Title = Utils.GetHeader(NavManager.Uri);
+
+        if (Title != "Files")
+        {
+            MetaTags = true;
+            StateHasChanged();
+        }
+
         NavManager.LocationChanged += LocationChanged;
         base.OnInitialized();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender) 
-        {
-            //await SetTitle();
-        }
-
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
     async void LocationChanged(object sender, LocationChangedEventArgs e)
     {
-        Title = Utils.PageHeaders[Utils.GetRootPath(e.Location).ToLower()];
+        Title = Utils.GetHeader(NavManager.Uri);
         StateHasChanged();
     }
 }

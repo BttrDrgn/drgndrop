@@ -8,6 +8,7 @@ namespace drgndrop
     {
         public string Name { get; set; }
         public long Creation { get; set; }
+        public long Size { get; set; }
         public string PasswordHash { get; set; }
         public bool IsEncrypted => PasswordHash != "";
     }
@@ -16,12 +17,13 @@ namespace drgndrop
     {
         public DrgnfileInfo Info;
 
-        public Drgnfile(string name, string password)
+        public Drgnfile(string name, string password, long size)
         {
             Info = new DrgnfileInfo();
 
             Info.Name = name;
             Info.PasswordHash = Crypt.EnhancedHashPassword(password);
+            Info.Size = size;
             Info.Creation = DateTimeOffset.Now.ToUnixTimeSeconds();
         }
 

@@ -6,6 +6,7 @@ namespace drgndrop
 {
     public static class Utils
     {
+        //Maybe split all of this up into their own proper class in Utils/ folder
         public static Random Rand = new Random(Guid.NewGuid().GetHashCode());
 
         public static string GithubRepo = "https://github.com/BttrDrgn/drgndrop";
@@ -21,6 +22,8 @@ namespace drgndrop
             { "/", "Upload" },
             { "/upload", "Upload" },
             { "/home", "Home" },
+            { "/register", "Register" },
+            { "/files", "Files" },
         };
 
         public static Dictionary<string, string> MIMETypes = new()
@@ -429,15 +432,6 @@ namespace drgndrop
             return MathF.Round(BytesToMB(bytes), digits);
         }
 
-        public static string GenLink(string path)
-        {
-#if DEBUG
-            return $"http://{Program.DomainName}/{path}";
-#else
-            return $"https://{Program.DomainName}/{path}";
-#endif
-        }
-
         public static string GetQuery(in string queryString, string key)
         {
             var split = queryString.Split('&');
@@ -499,14 +493,14 @@ namespace drgndrop
             if(drgnfile != null)
             {
                 metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"Drgndrop - {drgnfile.Name}"));
-                metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"https://drgndrop.me/files/{fileName}?key={password}"));
-                metaTags.WriteLine("\t" + CreateMetaTag("og:description", $"Created: {drgnfile.Creation}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"{Program.Http}://{Program.DomainName}/files/{fileName}?key={password}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:description", $"Created: {ParseEpoch(drgnfile.Creation)}"));
                 metaTags.WriteLine("\t" + CreateMetaTag("theme-color", "#0A60B0"));
             }
             else
             {
                 metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"Drgndrop - {fileName}"));
-                metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"https://drgndrop.me/files/{fileName}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"{Program.Http}://{Program.DomainName}/files/{fileName}"));
                 metaTags.WriteLine("\t" + CreateMetaTag("og:description", "FOSS privacy focused file sharing platform"));
                 metaTags.WriteLine("\t" + CreateMetaTag("theme-color", "#10357E"));
             }
@@ -546,7 +540,13 @@ namespace drgndrop
                 bool prefix = url.StartsWith("http");
 
                 string[] split = url.Split('/');
-                return $"/{split[prefix ? 3 : 1]}";
+                var retn = $"/{split[prefix ? 3 : 1]}";
+                var indexof = retn.IndexOf('?');
+                if (indexof != -1)
+                {
+                    retn = retn.Remove(indexof, retn.Length - indexof);
+                }
+                return retn;
             }
             catch (Exception ex)
             {
@@ -568,6 +568,47 @@ namespace drgndrop
             GithubCommits.Clear();
 
 
+        }
+
+        public static string GetHeader(string url)
+        {
+            if(PageHeaders.TryGetValue(GetRootPath(url).ToLower(), out var header))
+            {
+                return header;
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        public static string ParseEpoch(long epoch)
+        {
+            try
+            {
+                var date = DateTimeOffset.FromUnixTimeSeconds(epoch);
+                return $"{date.Month}/{date.Day}/{date.Year} {date.Hour.ToString("D2")}:{date.Minute.ToString("D2")}";
+            }
+            catch (Exception ex)
+            {
+                return "Null";
+            }
+        }
+
+        public static string ParseBytes(long bytes)
+        {
+            string[] suffix = { "B", "KB", "MB", "GB" };
+
+            int i = 0;
+            double size = bytes;
+
+            while (size >= 1024 && i < suffix.Length - 1)
+            {
+                size /= 1024;
+                i++;
+            }
+
+            return $"{size:0.##} {suffix[i]}";
         }
     }
 }

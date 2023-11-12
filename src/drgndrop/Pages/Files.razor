@@ -1,12 +1,75 @@
-﻿@page "/myfiles"
+﻿@page "/files/{FileID}"
+@using drgndrop;
+@using Crypt = BCrypt.Net.BCrypt;
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
 
-<PageTitle>My Files</PageTitle>
 
 <div class="container-fluid">
+@if (FileExists)
+{
+    @if (!PasswordCheck)
+    {
+        <PageTitle>Files - @FileID</PageTitle>
 
+        <a>Password is incorrect!</a>
+    }
+    else
+    {
+        <PageTitle>Files - @DlFile.Name</PageTitle>
+
+        <h1>@DlFile.Name</h1>
+
+        if (Utils.IsMedia(Utils.GetMIMEType(DlFile.Name)))
+        {
+            <img class="img-fluid img-thumbnail" src="@DownloadLink" />
+        }
+
+        <ul>
+            <li>Creation: <code>@Utils.ParseEpoch(DlFile.Creation)</code></li>
+            <li>Size: <code>@Utils.ParseBytes(DlFile.Size)</code></li>
+        </ul>
+
+        <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="@Utils.GetMIMEType(DlFile.Name)">
+                <a class="btn btn-secondary" href="@DownloadLink" target="_blank">Download</a>
+        </span>
+    }
+}
+else
+{
+    <PageTitle>Files - Not Found</PageTitle>
+    <p><code>@FileID</code> not found!</p>
+}
 </div>
 
-@code
-{
+@code {
+    [Parameter] public string FileID { get; set; }
+    public string DownloadLink = "";
+    public DrgnfileInfo? DlFile = null;
+    public bool FileExists = true;
+    public bool PasswordCheck = false;
+    public string Key = "";
 
+    protected override void OnInitialized()
+    {
+        string filePath = Path.Combine(Program.UploadPath, FileID);
+        if (FileExists = Directory.Exists(filePath))
+        {
+            DlFile = Drgnfile.Load(filePath);
+            if (DlFile != null)
+            {
+                var splitUrl = NavManager.Uri.Split('?');
+                Key = splitUrl.Length > 1 ? Utils.GetQuery(in splitUrl[1], "key") : "";
+
+                PasswordCheck = DlFile.IsEncrypted ? Crypt.EnhancedVerify(Key, DlFile.PasswordHash) : true;
+
+                DownloadLink = $"{Program.Http}://{Program.DomainName}/dl/{FileID}";
+                if (Key != "") DownloadLink += $"?key={Key}";
+            }
+            else FileExists = false;
+        }
+
+        base.OnInitialized();
+    }
 }

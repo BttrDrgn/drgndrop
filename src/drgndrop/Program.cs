@@ -9,6 +9,13 @@ namespace drgndrop
 {
     class Program
     {
+
+#if DEBUG
+        public static string Http = "http";
+#else
+        public static string Http = "https";
+#endif
+
         public static string AppName = "Drgndrop";
         public static string DomainName = "localhost:5132";
         public static string UploadPath = Path.Combine("C:", "drgndrop", "uploads");
@@ -58,10 +65,10 @@ namespace drgndrop
 
             app.MapGet("/src", async (HttpContext ctx) =>
             {
-                ctx.Response.Redirect("https://github.com/BttrDrgn/drgndrop", true);
+                ctx.Response.Redirect(Utils.GithubRepo, true);
             });
 
-            app.MapGet("/files/{path}", async (HttpContext ctx, string path) =>
+            app.MapGet("/dl/{path}", async (HttpContext ctx, string path) =>
             {
 
                 string filePath = Path.Combine(UploadPath, path);

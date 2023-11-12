@@ -21,6 +21,10 @@
                     <input class="form-check-input" type="checkbox" id="encrypt" @bind="@Encrypted" />
                     <label class="form-check-label" for="encrypt">Encrypt</label>
                 </div>
+                <div class="form-group form-check">
+                    <input class="form-check-input" type="checkbox" id="autocopy" @bind="@AutoCopy" />
+                    <label class="form-check-label" for="autocopy">Copy to Clipboard</label>
+                </div>
             </form>
         }
         else
@@ -40,7 +44,7 @@
         <p>Error: @ErrorMsg</p>
     }
 
-    @if(Finished)
+    @*@if(Finished)
     {
         @if (!Errored)
         {
@@ -53,7 +57,7 @@
             <div class="new-line"></div>
             <button onclick="@ResetState">Upload Another</button>
         }
-    }
+    }*@
 </div>
 
 
@@ -65,6 +69,7 @@
     private bool Encrypted = true;
     private int UploadedBytes = 0;
     private string LinkToFile = "";
+    private bool AutoCopy = true;
     private bool AutoCopied = false;
     public bool Finished = false;
     public IBrowserFile DroppedFile = null;
@@ -106,21 +111,24 @@
         await using var Timer = new Timer(_ => InvokeAsync(() => StateHasChanged()));
         Timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
 
-        var drgnfile = GenerateNewFile();
+        var drgnfile = GenerateNewFile(DroppedFile.Size);
         await ProcessFile(drgnfile);
-        CopyToClipboard();
+
+        if(AutoCopy) CopyToClipboard();
 
         Timer.Dispose();
         Uploading = false;
         Finished = true;
+
+        NavManager.NavigateTo(LinkToFile);
     }
 
-    public Drgnfile GenerateNewFile()
+    public Drgnfile GenerateNewFile(long size)
     {
         FileID = Utils.GenID();
         if (Encrypted) Password = Utils.GenPass();
 
-        return new Drgnfile(DroppedFile.Name, Password);
+        return new Drgnfile(DroppedFile.Name, Password, size);
     }
 
     public async Task ProcessFile(Drgnfile drgnfile)
@@ -172,19 +180,21 @@
             us?.Dispose();
             rs?.Dispose();
             cs?.Dispose();
+
+            if (Encrypted) LinkToFile = $"files/{FileID}?key={Password}";
+            else LinkToFile = $"files/{FileID}";
         }
     }
 
     public async void CopyToClipboard()
     {
-        if (Encrypted) LinkToFile = Utils.GenLink($"files/{FileID}?key={Password}");
-        else LinkToFile = Utils.GenLink($"files/{FileID}");
+        
 
         if (await JS.InvokeAsync<bool>("document.hasFocus"))
         {
             try
             {
-                await ClipboardService.CopyToClipboard(LinkToFile);
+                await ClipboardService.CopyToClipboard($"{Program.Http}://{Program.DomainName}/{LinkToFile}");
                 AutoCopied = true;
             }
             catch (Exception ex)
