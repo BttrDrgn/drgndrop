@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.Formatters;
+using System;
 using System.Linq.Expressions;
 using System.Web;
 
@@ -376,16 +377,24 @@ namespace drgndrop
             { ".zip", "application/x-zip-compressed" },
         };
 
-        public static List<string> MediaTypes = new List<string>()
+        public enum MediaType
         {
-            "image/jpeg",
-            "image/png",
-            "image/gif",
-            "video/webm",
-            "video/mp4",
-            "audio/wav",
-            "audio/mpeg",
-            "audio/ogg",
+            Null = 0,
+            Audio,
+            Image,
+            Video,
+        }
+
+        public static Dictionary<string, MediaType> MediaMimeTypes = new Dictionary<string, MediaType>()
+        {
+            { "image/jpeg", MediaType.Image },
+            { "image/png", MediaType.Image },
+            { "image/gif", MediaType.Image },
+            { "video/webm", MediaType.Video },
+            { "video/mp4", MediaType.Video },
+            { "audio/wav", MediaType.Audio },
+            { "audio/mpeg", MediaType.Video },
+            { "audio/ogg", MediaType.Audio },
         };
 
         public static string GetMIMEType(string file)
@@ -466,7 +475,14 @@ namespace drgndrop
 
         public static bool IsMedia(string mimetype)
         {
-            return MediaTypes.Contains(mimetype.ToLower());
+            return MediaMimeTypes.ContainsKey(mimetype.ToLower());
+        }
+
+        public static MediaType GetMediaType(string mimetype)
+        {
+            MediaType mediaType = MediaType.Null;
+            MediaMimeTypes.TryGetValue(mimetype.ToLower(), out mediaType);
+            return mediaType;
         }
 
         public static bool Compare(this byte[] cmp0, byte[] cmp1)

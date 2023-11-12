@@ -21,9 +21,27 @@
 
         <h1>@DlFile.Name</h1>
 
-        if (Utils.IsMedia(Utils.GetMIMEType(DlFile.Name)))
+        switch (Utils.GetMediaType(Utils.GetMIMEType(DlFile.Name)))
         {
-            <img class="img-fluid img-thumbnail" src="@DownloadLink" />
+            case Utils.MediaType.Image:
+                    <img class="img-fluid img-thumbnail" src="@DownloadLink" />
+                break;
+
+            case Utils.MediaType.Video:
+                    <div class="ratio ratio-16x9">
+                        <iframe src="@DownloadLink" allowfullscreen></iframe>
+                    </div>
+                break;
+
+            case Utils.MediaType.Audio:
+                <audio controls>
+                    <source src="@DownloadLink" type="@Utils.GetMIMEType(DlFile.Name)">
+                    Your browser does not support the audio element.
+                </audio>
+            break;
+
+            default:
+                break;
         }
 
         <ul>

@@ -78,6 +78,7 @@ namespace drgndrop
 
                 if ( ctx.Request.Headers.TryGetValue("User-Agent", out var userAgent) )
                 {
+                    Console.WriteLine(userAgent);
                     isDiscord = userAgent.ToString().ToLower().Contains("discord");
                 }
 
