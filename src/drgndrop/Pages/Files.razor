@@ -4,7 +4,7 @@
 @inject IWebHostEnvironment Environment
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
-
+@inject IHttpContextAccessor CtxAccessor;
 
 <div class="container-fluid">
 @if (FileExists)
@@ -68,9 +68,16 @@ else
     public bool FileExists = true;
     public bool PasswordCheck = false;
     public string Key = "";
-
+    
     protected override void OnInitialized()
     {
+        bool isDiscord = false;
+
+        if (CtxAccessor.HttpContext.Request.Headers.TryGetValue("User-Agent", out var userAgent))
+        {
+            isDiscord = userAgent.ToString().ToLower().Contains("discord");
+        }
+
         string filePath = Path.Combine(Program.UploadPath, FileID);
         if (FileExists = Directory.Exists(filePath))
         {

@@ -40,6 +40,7 @@ namespace drgndrop
 
             //DI
             builder.Services.AddScoped<IClipboardService, ClipboardService>();
+            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             var app = builder.Build();
 
@@ -153,8 +154,9 @@ namespace drgndrop
                     await temp.DisposeAsync();
 
                     ctx.Response.Headers.Add("Content-Disposition", $"inline; filename=\"{drgnfile.Name}\"");
+
                     Results.StatusCode(200);
-                    return Results.Stream(File.OpenRead(tempPath), mimeType);
+                    return Results.Stream(File.OpenRead(tempPath), mimeType, enableRangeProcessing: true);
                 }
                 catch (Exception ex)
                 {
