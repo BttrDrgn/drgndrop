@@ -6,6 +6,13 @@
 @inject IJSRuntime JS
 @inject IHttpContextAccessor CtxAccessor;
 
+<HeadContent>
+    <meta name="og:title" content="@(Program.AppName) - @(DlFile != null ? PasswordCheck ? DlFile.Name : FileID : FileID)" />
+    <meta name="og:url" content="@($"{Program.Http}://{Program.DomainName}/files/{FileID}?key={Key}"))" />
+    <meta name="og:description" content="@Description" />
+    <meta name="theme-color" content="@(PasswordCheck ? "#0A60B0" : "#10357E" )" />
+</HeadContent>
+
 <div class="container-fluid">
 @if (FileExists)
 {
@@ -68,16 +75,10 @@ else
     public bool FileExists = true;
     public bool PasswordCheck = false;
     public string Key = "";
-    
+    public string Description = "";
+
     protected override void OnInitialized()
     {
-        bool isDiscord = false;
-
-        if (CtxAccessor.HttpContext.Request.Headers.TryGetValue("User-Agent", out var userAgent))
-        {
-            isDiscord = userAgent.ToString().ToLower().Contains("discord");
-        }
-
         string filePath = Path.Combine(Program.UploadPath, FileID);
         if (FileExists = Directory.Exists(filePath))
         {
@@ -94,6 +95,16 @@ else
             }
             else FileExists = false;
         }
+
+        if(PasswordCheck)
+        {
+            Description = $"Created: {Utils.ParseEpoch(DlFile.Creation)}\nSize: {Utils.ParseBytes(DlFile.Size)}";
+        }
+        else
+        {
+            Description = "FOSS privacy focused file sharing platform";
+        }
+        
 
         base.OnInitialized();
     }

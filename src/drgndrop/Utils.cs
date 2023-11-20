@@ -502,20 +502,18 @@ namespace drgndrop
 
         public static string GenerateFileMetaTags(string fileName, string password = "", DrgnfileInfo? drgnfile = null)
         {
-            var template = new StreamReader(File.OpenRead("wwwroot/metaembed.html")).ReadToEnd();
-
             StringWriter metaTags = new StringWriter();
 
             if(drgnfile != null)
             {
-                metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"Drgndrop - {drgnfile.Name}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"{Program.AppName} - {drgnfile.Name}"));
                 metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"{Program.Http}://{Program.DomainName}/files/{fileName}?key={password}"));
-                metaTags.WriteLine("\t" + CreateMetaTag("og:description", $"Created: {ParseEpoch(drgnfile.Creation)}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:description", $"Created: {ParseEpoch(drgnfile.Creation)}\nSize: {ParseBytes(drgnfile.Size)}"));
                 metaTags.WriteLine("\t" + CreateMetaTag("theme-color", "#0A60B0"));
             }
             else
             {
-                metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"Drgndrop - {fileName}"));
+                metaTags.WriteLine("\t" + CreateMetaTag("og:title", $"{Program.AppName} - {fileName}"));
                 metaTags.WriteLine("\t" + CreateMetaTag("og:url", $"{Program.Http}://{Program.DomainName}/files/{fileName}"));
                 metaTags.WriteLine("\t" + CreateMetaTag("og:description", "FOSS privacy focused file sharing platform"));
                 metaTags.WriteLine("\t" + CreateMetaTag("theme-color", "#10357E"));
@@ -524,9 +522,7 @@ namespace drgndrop
             metaTags.WriteLine("\t" + CreateMetaTag("og:type", "website"));
             metaTags.WriteLine("\t" + CreateMetaTag("og:image", ""));
 
-            template = template.Replace("@MetaTags", metaTags.ToString());
-
-            return template;
+            return metaTags.ToString();
         }
 
         public static string CreateMetaTag(string value, string content)
@@ -603,7 +599,7 @@ namespace drgndrop
             try
             {
                 var date = DateTimeOffset.FromUnixTimeSeconds(epoch);
-                return $"{date.Month}/{date.Day}/{date.Year} {date.Hour.ToString("D2")}:{date.Minute.ToString("D2")}";
+                return $"{date.Year}/{date.Month}/{date.Day} {date.Hour.ToString("D2")}:{date.Minute.ToString("D2")}";
             }
             catch (Exception ex)
             {

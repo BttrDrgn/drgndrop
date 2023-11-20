@@ -33,11 +33,6 @@ namespace drgndrop
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
 
-            builder.Services.AddSignalR(hubOptions =>
-            {
-                hubOptions.MaximumReceiveMessageSize = 64000;
-            });
-
             //DI
             builder.Services.AddScoped<IClipboardService, ClipboardService>();
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -79,7 +74,6 @@ namespace drgndrop
 
                 if ( ctx.Request.Headers.TryGetValue("User-Agent", out var userAgent) )
                 {
-                    Console.WriteLine(userAgent);
                     isDiscord = userAgent.ToString().ToLower().Contains("discord");
                 }
 
@@ -112,26 +106,29 @@ namespace drgndrop
 
                     if (isDiscord)
                     {
-                        string html = "";
+                        string metaTags = "";
 
                         if (drgnfile.IsEncrypted)
                         {
                             if (passwordCheck)
                             {
                                 if (isMedia) goto render;
-                                html = Utils.GenerateFileMetaTags(path, key, drgnfile);
+                                metaTags = Utils.GenerateFileMetaTags(path, key, drgnfile);
                             }
                             else
                             {
-                                html = Utils.GenerateFileMetaTags(path);
+                                metaTags = Utils.GenerateFileMetaTags(path);
                             }
                         }
                         else
                         {
-                            html = Utils.GenerateFileMetaTags(path, drgnfile: drgnfile);
+                            metaTags = Utils.GenerateFileMetaTags(path, drgnfile: drgnfile);
                         }
 
-                        return Results.Text(html, "text/html");
+                        var template = new StreamReader(File.OpenRead("wwwroot/metaembed.html")).ReadToEnd();
+                        template = template.Replace("@MetaTags", metaTags.ToString());
+
+                        return Results.Text(metaTags, "text/html");
                     }
                     else
                     {
