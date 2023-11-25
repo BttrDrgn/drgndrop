@@ -70,6 +70,7 @@ namespace drgndrop
                 string filePath = Path.Combine(UploadPath, path);
 
                 bool exists = Directory.Exists(filePath);
+
                 bool isDiscord = false;
 
                 if ( ctx.Request.Headers.TryGetValue("User-Agent", out var userAgent) )
@@ -90,7 +91,7 @@ namespace drgndrop
                     }
                 }
 
-                var tempPath = Path.Combine(TempPath, $".{Utils.GenID()}.tmp");
+                var tempPath = Path.Combine(TempPath, $".{path}.tmp");
 
                 try
                 {
@@ -139,21 +140,28 @@ namespace drgndrop
                     }
 
                 render:
-                    SevenZipExtractor extractor;
 
-                    var dataPath = Path.Combine(filePath, "data");
-                    if (drgnfile.IsEncrypted && key != "") extractor = new SevenZipExtractor(dataPath, key);
-                    else extractor = new SevenZipExtractor(dataPath);
+                    FileStream temp;
+                    if (!File.Exists(tempPath))
+                    {
+                        SevenZipExtractor extractor;
+                        var dataPath = Path.Combine(filePath, "data");
+                        if (drgnfile.IsEncrypted && key != "") extractor = new SevenZipExtractor(dataPath, key);
+                        else extractor = new SevenZipExtractor(dataPath);
 
-                    FileStream temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite);
-                    File.SetAttributes(temp.SafeFileHandle, FileAttributes.Hidden);
-                    await extractor.ExtractFileAsync(0, temp);
-                    await temp.DisposeAsync();
+                        temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+                        File.SetAttributes(temp.SafeFileHandle, FileAttributes.Hidden);
+                        await extractor.ExtractFileAsync(0, temp);
+                    }
+                    else
+                    {
+                        temp = new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    }
 
                     ctx.Response.Headers.Add("Content-Disposition", $"inline; filename=\"{drgnfile.Name}\"");
 
                     Results.StatusCode(200);
-                    return Results.Stream(File.OpenRead(tempPath), mimeType, enableRangeProcessing: true);
+                    return Results.Stream(temp, mimeType, enableRangeProcessing: true);
                 }
                 catch (Exception ex)
                 {
