@@ -141,7 +141,6 @@ namespace drgndrop
 
                 render:
 
-                    FileStream temp;
                     if (!File.Exists(tempPath))
                     {
                         SevenZipExtractor extractor;
@@ -149,19 +148,16 @@ namespace drgndrop
                         if (drgnfile.IsEncrypted && key != "") extractor = new SevenZipExtractor(dataPath, key);
                         else extractor = new SevenZipExtractor(dataPath);
 
-                        temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+                        FileStream temp = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
                         File.SetAttributes(temp.SafeFileHandle, FileAttributes.Hidden);
                         await extractor.ExtractFileAsync(0, temp);
-                    }
-                    else
-                    {
-                        temp = new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        await temp.DisposeAsync();
                     }
 
                     ctx.Response.Headers.Add("Content-Disposition", $"inline; filename=\"{drgnfile.Name}\"");
 
                     Results.StatusCode(200);
-                    return Results.Stream(temp, mimeType, enableRangeProcessing: true);
+                    return Results.Stream(new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite), mimeType, enableRangeProcessing: true);
                 }
                 catch (Exception ex)
                 {
@@ -174,7 +170,8 @@ namespace drgndrop
 
         private static void Initialize()
         {
-            Utils.IvokeInterval(TimeSpan.FromSeconds(30), FlushTempCache);
+            Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushTempCache, true);
+            Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushNullData, true);
 
             string path = "config.toml";
             if (File.Exists(path))
@@ -219,6 +216,25 @@ namespace drgndrop
                 if (!Utils.IsFileLocked(file))
                 {
                     File.Delete(file);
+                }
+            }
+        }
+
+        public static void FlushNullData()
+        {
+            foreach(var folder in Directory.GetDirectories(UploadPath))
+            {
+                foreach(var file in Directory.GetFiles(folder))
+                {
+                    if(file.EndsWith("data") && !Utils.IsFileLocked(file))
+                    {
+                        var info = new FileInfo(Path.Combine(UploadPath, folder, file));
+                        if (info.Length <= 0)
+                        {
+                            Directory.Delete(Path.Combine(UploadPath, folder), true);
+                            break;
+                        }
+                    }
                 }
             }
         }
