@@ -22,7 +22,10 @@ namespace drgndrop
             Info = new DrgnfileInfo();
 
             Info.Name = name;
-            Info.PasswordHash = Crypt.EnhancedHashPassword(password);
+            if (!String.IsNullOrEmpty(password))
+            {
+                Info.PasswordHash = Crypt.EnhancedHashPassword(password);
+            }
             Info.Size = size;
             Info.Creation = DateTimeOffset.Now.ToUnixTimeSeconds();
         }
