@@ -568,8 +568,10 @@ namespace drgndrop
             }
         }
 
-        public static async Task IvokeInterval(TimeSpan timeSpan, Action action)
+        public static async Task IvokeInterval(TimeSpan timeSpan, Action action, bool now = false)
         {
+            if(now) action();
+
             var periodicTimer = new PeriodicTimer(timeSpan);
             while (await periodicTimer.WaitForNextTickAsync())
             {
