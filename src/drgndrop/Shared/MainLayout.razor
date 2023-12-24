@@ -1,6 +1,9 @@
 ﻿@inherits LayoutComponentBase
+@using drgndrop.Services;
+
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
+@inject UserService UserService
 
 @if (MetaTags)
 {
@@ -47,8 +50,9 @@
     public static string Title = "";
     public static bool Ready = false;
     public bool MetaTags = false;
+    public Dictionary<string, string> Cookies = new Dictionary<string, string>();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Title = Utils.GetHeader(NavManager.Uri);
 
@@ -59,12 +63,47 @@
         }
 
         NavManager.LocationChanged += LocationChanged;
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
     async void LocationChanged(object sender, LocationChangedEventArgs e)
     {
         Title = Utils.GetHeader(NavManager.Uri);
         StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            string cookies = await JS.InvokeAsync<string>("cookies.read");
+            if (!string.IsNullOrEmpty(cookies))
+            {
+                var splitCookies = cookies.Split(";");
+                foreach (var cookie in splitCookies)
+                {
+                    var splitCookie = cookie.Split("=");
+                    Cookies.Add(splitCookie[0], splitCookie[1]);
+                }
+            }
+
+            // string session = GetCookie("session-token");
+            // if (!string.IsNullOrEmpty(session))
+            // {
+            //     UserService.CurrentUser = Database.GetUserBySession(session);
+            // }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public string GetCookie(string key)
+    {
+        if(Cookies.TryGetValue(key, out var value))
+        {
+            return value;
+        }
+
+        return null;
     }
 }

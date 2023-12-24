@@ -10,9 +10,6 @@ namespace drgndrop
         //Maybe split all of this up into their own proper class in Utils/ folder
         public static Random Rand = new Random(Guid.NewGuid().GetHashCode());
 
-        public static string GithubRepo = "https://github.com/BttrDrgn/drgndrop";
-        public static List<string> GithubCommits = new List<string>();
-
         public static int IDLen = 6;
         public static int PassLen => Rand.Next(26, 32);
         public static string Chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -577,13 +574,6 @@ namespace drgndrop
             {
                 action();
             }
-        }
-
-        public static async Task GatherGitCommits()
-        {
-            GithubCommits.Clear();
-
-
         }
 
         public static string GetHeader(string url)

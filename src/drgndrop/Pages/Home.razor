@@ -1,11 +1,16 @@
 ﻿@page "/home"
 @using drgndrop;
+@using drgndrop.Services;
 @inject IWebHostEnvironment Environment
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
+@inject UserService UserService
 
 <PageTitle>Home</PageTitle>
 
 <div class="container-fluid">
-
+    @if (@UserService.CurrentUser != null)
+    {
+        <h1>Welcome back @UserService.CurrentUser?.Name</h1>
+    }
 </div>

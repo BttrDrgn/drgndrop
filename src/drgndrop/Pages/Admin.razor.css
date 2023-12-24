@@ -1,0 +1,6 @@
+﻿.console {
+    color: white;
+    background-color: rgb(46, 46, 46);
+    height: 25rem;
+    overflow: auto;
+}

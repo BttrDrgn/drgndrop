@@ -102,8 +102,6 @@
         if(AutoCopy) CopyToClipboard();
 
         Timer.Dispose();
-        Uploading = false;
-        Finished = true;
 
         NavManager.NavigateTo(LinkToFile);
     }
@@ -147,16 +145,9 @@
         }
         catch (Exception ex)
         {
-            cs?.Dispose();
-            us?.Dispose();
-            rs?.Dispose();
-
             ErrorMsg = ex.Message;
 
             if (File.Exists(FilePath)) File.Delete(FilePath);
-
-            Uploading = false;
-            Finished = true;
         }
         finally
         {
@@ -168,13 +159,14 @@
 
             if (Encrypted) LinkToFile = $"files/{FileID}?key={Password}";
             else LinkToFile = $"files/{FileID}";
+
+            Uploading = false;
+            Finished = true;
         }
     }
 
     public async void CopyToClipboard()
     {
-        
-
         if (await JS.InvokeAsync<bool>("document.hasFocus"))
         {
             try

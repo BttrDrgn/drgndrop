@@ -1,54 +1,68 @@
 ﻿@page "/register"
 @using drgndrop;
+@using drgndrop.Services;
 @inject IWebHostEnvironment Environment
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
+@inject UserService UserService
 
 <PageTitle>Register</PageTitle>
 
 <div class="container-fluid">
     @if (ValidKey)
     {
-        <form>
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input class="form-control input-field" type="text" id="username" @bind="@Username" />
-            </div>
-            <div class="form-group">
-                <label for="username">Password</label>
-                <input class="form-control input-field" type="password" id="password" @bind="@Password" />
-            </div>
-            <button class="btn btn-primary">Submit</button>
-        </form>
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input class="form-control input-field" type="text" id="username" @bind="@Username" />
+        </div>
+        <div class="form-group">
+            <label for="username">Password</label>
+            <input class="form-control input-field" type="password" id="password" @bind="@Password" />
+        </div>
+        <button class="btn btn-primary" @onclick="() => CreateUser(Username, Password, InviteKey) ">Submit</button>
     }
     else
     {
-        <form>
-            <div class="form-group">
-                <label for="invite-key">Invite Key</label>
-                <input class="form-control input-field" type="text" id="invite-key" @bind="@InviteKey" />
+        <div class="form-group">
+            <label for="invite-key">Invite Key</label>
+            <input class="form-control input-field" type="text" id="invite-key" @bind="@Key" />
+            @if (Attempted)
+            {
+                <small class="form-text text-muted">Invite key already used or is invalid!</small>
+            }
+            else
+            {
                 <small id="invite-key-help" class="form-text text-muted">This is a unique key given to you by another member.</small>
-            </div>
-            <button class="btn btn-secondary">Submit</button>
-        </form>
+            }
+        </div>
+        <button class="btn btn-secondary" @onclick="() => CheckKey(Key) ">Submit</button>
+        
     }
 </div>
 
 @code
 {
     public bool ValidKey = false;
-    public string InviteKey = "";
+    public string Key = "";
     public string Username = "";
     public string Password = "";
+    public InviteKey? InviteKey = null;
+    public bool Attempted = false;
 
     protected override void OnInitialized()
     {
-        var splitUrl = NavManager.Uri.Split('?');
-        InviteKey = splitUrl.Length > 1 ? Utils.GetQuery(in splitUrl[1], "key") : "";
-
-        if (InviteKey != "")
+        if(UserService.CurrentUser != null)
         {
-            ValidKey = CheckKey(InviteKey);
+            NavManager.NavigateTo("/upload");
+            return;
+        }
+
+        var splitUrl = NavManager.Uri.Split('?');
+        Key = splitUrl.Length > 1 ? Utils.GetQuery(in splitUrl[1], "key") : "";
+
+        if (Key != "")
+        {
+            CheckKey(Key);
         }
 
         base.OnInitialized();
@@ -56,7 +70,27 @@
 
     public bool CheckKey(string key)
     {
-        //stub
-        return key != "";
+        Attempted = true;
+        InviteKey = Database.GetKey(key);
+        ValidKey = (InviteKey != null && string.IsNullOrEmpty(InviteKey.UsedBy));
+        return ValidKey;
+    }
+
+    public async Task<bool> CreateUser(string username, string password, InviteKey key)
+    {
+        if(Database.GetUserByName(username) == null)
+        {
+            if(Database.CreateUser(username, password, key))
+            {
+                User? user = Database.GetUserByName(username);
+                if (user != null)
+                {
+                    NavManager.NavigateTo("/upload");
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

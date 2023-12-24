@@ -1,3 +1,4 @@
+using drgndrop.Services;
 using Microsoft.AspNetCore.Http.Extensions;
 using SevenZip;
 using System.IO;
@@ -21,21 +22,27 @@ namespace drgndrop
         public static string UploadPath = Path.Combine("C:", "drgndrop", "uploads");
         public static string TempPath = Path.Combine("C:", "drgndrop", "temp");
         public static string LibPath = Path.Combine("C:", "drgndrop", "lib");
+        public static string RepoPath = Path.Combine("C:", "drgndrop", "repo");
         public static long MaxFileSize = 50L * 1024 * 1024;
+        public static string CommitSHA = "";
 
         public static string Title = "";
 
+        public static string[] Args;
+
         public static void Main(string[] args)
         {
-            Initialize();
+            Args = args;
+            Initialize(Args);
 
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(Args);
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
 
             //DI
             builder.Services.AddScoped<IClipboardService, ClipboardService>();
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            builder.Services.AddSingleton<UserService>();
 
             var app = builder.Build();
 
@@ -61,7 +68,7 @@ namespace drgndrop
 
             app.MapGet("/src", async (HttpContext ctx) =>
             {
-                ctx.Response.Redirect(Utils.GithubRepo, true);
+                ctx.Response.Redirect($"https://github.com/{Git.Repo}", true);
             });
 
             app.MapGet("/dl/{path}", async (HttpContext ctx, string path) =>
@@ -165,31 +172,15 @@ namespace drgndrop
                 }
             });
 
+            Console.Write("\n\n\n");
+
             app.Run();
         }
 
-        private static void Initialize()
+        private static void Initialize(string[] args)
         {
-            Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushTempCache, true);
-            Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushNullData, true);
-
             string path = "config.toml";
-            if (File.Exists(path))
-            {
-                TOML toml = new TOML(path);
-                if (toml.Table == null) return;
-
-                DomainName = toml.Get("host", "domain", "localhost:5132");
-                AppName = toml.Get("host", "appname", "Drgndrop");
-
-                MaxFileSize = toml.Get("file", "maxfilesize", 50L);
-                MaxFileSize *= (long)Math.Round(Math.Pow(1024, 2));
-
-                UploadPath = toml.Get("file", "uploadpath", Path.Combine("C:", "drgndrop", "upload"));
-                TempPath = toml.Get("file", "temppath", Path.Combine("C:", "drgndrop", "temp"));
-                LibPath = toml.Get("file", "libpath", Path.Combine("C:", "drgndrop", "lib"));
-            }
-            else
+            if (!File.Exists(path))
             {
                 StreamWriter writer = new StreamWriter(path);
 
@@ -202,11 +193,53 @@ namespace drgndrop
                 writer.WriteLine($"uploadpath = \"C:/drgndrop/uploads/\"");
                 writer.WriteLine($"temppath = \"C:/drgndrop/temp/\"");
                 writer.WriteLine($"libpath = \"C:/drgndrop/lib/\"");
+                writer.WriteLine($"repopath = \"C:/drgndrop/repo/\"");
+
+                writer.WriteLine($"[database]");
+                writer.WriteLine($"password = \"\"");
+                writer.WriteLine($"shared = true");
 
                 writer.Close();
             }
 
+            TOML toml = new TOML(path);
+            if (toml.Table == null) return;
+
+            DomainName = toml.Get("host", "domain", "localhost:5132");
+            AppName = toml.Get("host", "appname", "Drgndrop");
+
+            MaxFileSize = toml.Get("file", "maxfilesize", 50L);
+            MaxFileSize *= (long)Math.Round(Math.Pow(1024, 2));
+
+            UploadPath = toml.Get("file", "uploadpath", Path.Combine("C:", "drgndrop", "upload"));
+            TempPath = toml.Get("file", "temppath", Path.Combine("C:", "drgndrop", "temp"));
+            LibPath = toml.Get("file", "libpath", Path.Combine("C:", "drgndrop", "lib"));
+            RepoPath = toml.Get("file", "repopath", Path.Combine("C:", "drgndrop", "repo"));
+
+            if(GetArg("--delete-database") == "confirm")
+            {
+                if(File.Exists("database.db"))
+                {
+                    File.Delete("database.db");
+                }
+            }
+
+            Database.Initialize(
+                "database.db",
+                toml.Get("database", "password", ""),
+                toml.Get("database", "shared", true)
+            );
+
             SevenZipBase.SetLibraryPath(Path.Combine(LibPath, "7z", "x64", "7za.dll"));
+
+            Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushTempCache, true);
+            Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushNullData, true);
+
+            Git.GatherCommits();
+
+            if (Directory.Exists(Path.Combine(RepoPath, ".git")))
+            {
+            }
         }
 
         public static void FlushTempCache()
@@ -237,6 +270,26 @@ namespace drgndrop
                     }
                 }
             }
+        }
+
+        public static string? GetArg(string arg)
+        {
+            for(int i = 0; i < Args.Length; ++i)
+            {
+                if (Args[i].StartsWith("--") && Args[i] == arg)
+                {
+                    if(Args.Length > i + 1)
+                    {
+                        if (Args[i + 1].StartsWith("--"))
+                        {
+                            return Args[i + 1];
+                        }
+                    }
+                    return "";
+                }
+            }
+
+            return null;
         }
     }
 }

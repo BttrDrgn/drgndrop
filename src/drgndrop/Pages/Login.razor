@@ -1,0 +1,60 @@
+﻿@page "/login"
+@using drgndrop;
+@using drgndrop.Services;
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+@inject UserService UserService
+
+<PageTitle>Register</PageTitle>
+
+<div class="container-fluid">
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input class="form-control input-field" type="text" id="username" @bind="@Username" />
+    </div>
+    <div class="form-group">
+        <label for="username">Password</label>
+        <input class="form-control input-field" type="password" id="password" @bind="@Password" />
+        @if(Attempted)
+        {
+            <small class="form-text text-muted">Invalid login attempt</small>
+        }
+    </div>
+    <button class="btn btn-primary" @onclick="() => LoginUser(Username, Password) ">Submit</button>
+</div>
+
+@code
+{
+    public string Username = "";
+    public string Password = "";
+    public bool Attempted = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserService.CurrentUser != null)
+        {
+            NavManager.NavigateTo("/upload");
+            return;
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    public async Task<bool> LoginUser(string username, string password)
+    {
+        Attempted = true;
+        User? user = Database.GetUserByName(username);
+        if(user != null)
+        {
+            if(user.PasswordCheck(password))
+            {
+                await JS.InvokeVoidAsync("cookies.write", "session-token", user.SessionToken, 30);
+                NavManager.NavigateTo("/upload");
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
