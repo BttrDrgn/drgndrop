@@ -23,6 +23,7 @@ namespace drgndrop
         public static string TempPath = Path.Combine("C:", "drgndrop", "temp");
         public static string LibPath = Path.Combine("C:", "drgndrop", "lib");
         public static string RepoPath = Path.Combine("C:", "drgndrop", "repo");
+        public static string DatabasePath = Path.Combine("C:", "drgndrop", "db");
         public static long MaxFileSize = 50L * 1024 * 1024;
         public static string CommitSHA = "";
 
@@ -194,6 +195,7 @@ namespace drgndrop
                 writer.WriteLine($"temppath = \"C:/drgndrop/temp/\"");
                 writer.WriteLine($"libpath = \"C:/drgndrop/lib/\"");
                 writer.WriteLine($"repopath = \"C:/drgndrop/repo/\"");
+                writer.WriteLine($"dbpath = \"C:/drgndrop/database/\"");
 
                 writer.WriteLine($"[database]");
                 writer.WriteLine($"password = \"\"");
@@ -215,17 +217,18 @@ namespace drgndrop
             TempPath = toml.Get("file", "temppath", Path.Combine("C:", "drgndrop", "temp"));
             LibPath = toml.Get("file", "libpath", Path.Combine("C:", "drgndrop", "lib"));
             RepoPath = toml.Get("file", "repopath", Path.Combine("C:", "drgndrop", "repo"));
+            DatabasePath = toml.Get("file", "dbpath", Path.Combine("C:", "drgndrop", "database"));
 
             if(GetArg("--delete-database") == "confirm")
             {
-                if(File.Exists("database.db"))
+                if(File.Exists(Path.Combine(DatabasePath, "database.db")))
                 {
-                    File.Delete("database.db");
+                    File.Delete(Path.Combine(DatabasePath, "database.db"));
                 }
             }
 
             Database.Initialize(
-                "database.db",
+                Path.Combine(DatabasePath, "database.db"),
                 toml.Get("database", "password", ""),
                 toml.Get("database", "shared", true)
             );

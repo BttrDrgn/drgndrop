@@ -14,7 +14,7 @@ namespace drgndrop
         public static void Initialize(string file, string password = "", bool shared = true)
         {
             bool initialSetup = false;
-            if(!File.Exists("database.db"))
+            if(!File.Exists(Path.Combine(Program.DatabasePath, "database.db")))
             {
                 initialSetup = true;
             }
