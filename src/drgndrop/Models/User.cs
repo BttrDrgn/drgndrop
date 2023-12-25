@@ -20,6 +20,7 @@ namespace drgndrop
         public string Password { get; set; }
         public string GUID { get; set; }
         public string SessionToken { get; set; }
+        public List<DrgnfileInfo> Uploads { get; set; }
         public long Creation { get; set; }
 
         public bool PasswordCheck(string pass)

@@ -48,6 +48,11 @@
         public string Buffer { get; set; }
         public Dictionary<string, Action<Console, string[]>> Commands = new Dictionary<string, Action<Console, string[]>>()
         {
+            { "cls", (cmd, args) =>
+            {
+                cmd.Output = new List<string>();
+            }},
+
             { "pw", (cmd, args) =>
             {
                 if(args.Count() == 4)

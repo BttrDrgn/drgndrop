@@ -21,7 +21,7 @@ namespace drgndrop
             { "/upload", "Upload" },
             { "/home", "Home" },
             { "/register", "Register" },
-            { "/files", "Files" },
+            { "/myfiles", "My Files" },
         };
 
         public static Dictionary<string, string> MIMETypes = new()

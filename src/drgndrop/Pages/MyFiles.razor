@@ -1,12 +1,50 @@
 ﻿@page "/myfiles"
+@using drgndrop.Services
+@inject NavigationManager NavManager
+@inject UserService UserService
 
 <PageTitle>My Files</PageTitle>
 
 <div class="container-fluid">
-
+    <table class="table text-white">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>File</th>
+                <th>Creation</th>
+                <th>Size</th>
+                <th>Password</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Files.Count; i++)
+            {
+                <tr>
+                    <td><button class="btn me-3"><span class="oi oi-link-intact text-white"></span></button>@Files[i].ID</td>
+                    <td>@Files[i].Name</td>
+                    <td>@Utils.ParseEpoch(Files[i].Creation)</td>
+                    <td>@Utils.ParseBytes(Files[i].Size)</td>
+                    <td class="text-muted me-0">@Files[i].PasswordHash</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
 
-@code
-{
+@code {
+    public List<DrgnfileInfo> Files = new List<DrgnfileInfo>();
 
+    protected override async Task OnInitializedAsync()
+    {
+        if(!UserService.LoggedIn)
+        {
+            NavManager.NavigateTo("/login");
+        }
+        else
+        {
+            Files = UserService.CurrentUser.Uploads;
+        }
+
+        await base.OnInitializedAsync();
+    }
 }

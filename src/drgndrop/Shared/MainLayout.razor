@@ -87,11 +87,12 @@
                 }
             }
 
-            // string session = GetCookie("session-token");
-            // if (!string.IsNullOrEmpty(session))
-            // {
-            //     UserService.CurrentUser = Database.GetUserBySession(session);
-            // }
+            string session = GetCookie("session-token");
+            if (!string.IsNullOrEmpty(session))
+            {
+                UserService.CurrentUser = Database.GetUserBySession(session);
+                StateHasChanged();
+            }
         }
 
         await base.OnAfterRenderAsync(firstRender);

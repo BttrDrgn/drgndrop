@@ -6,6 +6,7 @@ namespace drgndrop
 {
     public class DrgnfileInfo
     {
+        public string ID { get; set; }
         public string Name { get; set; }
         public long Creation { get; set; }
         public long Size { get; set; }
@@ -17,12 +18,13 @@ namespace drgndrop
     {
         public DrgnfileInfo Info;
 
-        public Drgnfile(string name, string password, long size)
+        public Drgnfile(string id, string name, string password, long size)
         {
             Info = new DrgnfileInfo();
 
+            Info.ID = id;
             Info.Name = name;
-            if (!String.IsNullOrEmpty(password))
+            if (!string.IsNullOrEmpty(password))
             {
                 Info.PasswordHash = Crypt.EnhancedHashPassword(password);
             }

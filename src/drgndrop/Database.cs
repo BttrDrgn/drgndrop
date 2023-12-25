@@ -86,6 +86,7 @@ namespace drgndrop
                     InvitedBy = "00000000-0000-0000-0000-000000000000",
                     Creation = DateTimeOffset.Now.ToUnixTimeSeconds(),
                     Group = Group.Admin,
+                    Uploads = new List<DrgnfileInfo>(),
                 };
 
                 Users.Insert(newUser);
@@ -110,6 +111,7 @@ namespace drgndrop
                     SessionToken = Guid.NewGuid().ToString(),
                     Creation = DateTimeOffset.Now.ToUnixTimeSeconds(),
                     Group = Group.User,
+                    Uploads = new List<DrgnfileInfo>(),
                 };
 
                 Users.Insert(newUser);

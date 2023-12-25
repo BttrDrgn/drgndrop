@@ -1,10 +1,12 @@
 ﻿@page "/upload"
 @using drgndrop;
+@using drgndrop.Services;
 @using SevenZip;
 @inject IWebHostEnvironment Environment
 @inject NavigationManager NavManager
 @inject IClipboardService ClipboardService
 @inject IJSRuntime JS
+@inject UserService UserService
 
 <PageTitle>Upload</PageTitle>
 
@@ -103,6 +105,15 @@
 
         Timer.Dispose();
 
+        var user = UserService.CurrentUser;
+        if (user.Uploads == null) user.Uploads = new List<DrgnfileInfo>();
+
+        var uploadInfo = drgnfile.Info;
+        uploadInfo.PasswordHash = Password;
+        user.Uploads.Add(uploadInfo);
+
+        user.Update();
+
         NavManager.NavigateTo(LinkToFile);
     }
 
@@ -111,7 +122,7 @@
         FileID = Utils.GenID();
         if (Encrypted) Password = Utils.GenPass();
 
-        return new Drgnfile(DroppedFile.Name, Password, size);
+        return new Drgnfile(FileID, DroppedFile.Name, Password, size);
     }
 
     public async Task ProcessFile(Drgnfile drgnfile)
