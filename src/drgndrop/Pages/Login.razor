@@ -32,7 +32,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (UserService.CurrentUser != null)
+        if (UserService.LoggedIn)
         {
             NavManager.NavigateTo("/upload");
             return;

@@ -51,7 +51,7 @@
 
     protected override void OnInitialized()
     {
-        if(UserService.CurrentUser != null)
+        if (UserService.LoggedIn)
         {
             NavManager.NavigateTo("/upload");
             return;

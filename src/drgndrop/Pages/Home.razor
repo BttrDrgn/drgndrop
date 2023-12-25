@@ -9,7 +9,7 @@
 <PageTitle>Home</PageTitle>
 
 <div class="container-fluid">
-    @if (@UserService.CurrentUser != null)
+    @if (UserService.LoggedIn)
     {
         <h1>Welcome back @UserService.CurrentUser?.Name</h1>
     }

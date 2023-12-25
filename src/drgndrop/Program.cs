@@ -43,7 +43,8 @@ namespace drgndrop
             //DI
             builder.Services.AddScoped<IClipboardService, ClipboardService>();
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            builder.Services.AddSingleton<UserService>();
+
+            builder.Services.AddScoped<UserService>();
 
             var app = builder.Build();
 
