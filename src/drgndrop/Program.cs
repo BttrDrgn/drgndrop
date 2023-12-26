@@ -69,9 +69,14 @@ namespace drgndrop
                 ctx.Response.Redirect("/upload", true);
             });
 
-            app.MapGet("/src", async (HttpContext ctx) =>
+            app.MapGet("/src/", async (HttpContext ctx) =>
             {
                 ctx.Response.Redirect($"https://github.com/{Git.Repo}", true);
+            });
+
+            app.MapGet("/src/{path}", async (HttpContext ctx, string path) =>
+            {
+                ctx.Response.Redirect($"https://github.com/{Git.Repo}/{path}", true);
             });
 
             app.MapGet("/dl/{path}", async (HttpContext ctx, string path) =>
