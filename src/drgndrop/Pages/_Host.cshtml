@@ -34,48 +34,7 @@
 
     <script src="_framework/blazor.server.js"></script>
 
-    <script>
-        window.cookies = {
-            write: (key, value, days) =>
-            {
-                var expires;
-                if (days)
-                {
-                    var date = new Date();
-                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                    expires = "; expires=" + date.toGMTString();
-                }
-                else
-                {
-                    expires = "";
-                }
-                document.cookie = key + "=" + value + expires + "; path=/";
-                console.log(document.cookie);
-            },
-            read: () =>
-            {
-                return document.cookie;
-            }
-        }
-
-        window.localStore = {
-            write: (key, value) =>
-            {
-                localStorage.setItem(key, value);
-            },
-            read: (key) =>
-            {
-                return localStorage.getItem(key);
-            },
-            delete: (key) =>
-            {
-                localStorage.removeItem(key);
-            },
-            clear: () =>
-            {
-                localStorage.clear();
-            }
-        }
-    </script>
+    <script src="js/blazorCookie.js"></script>
+    <script src="js/blazorLocalStorage.js"></script>
 </body>
 </html>
