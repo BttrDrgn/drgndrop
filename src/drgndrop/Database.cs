@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using System.Xml.Linq;
 using Crypt = BCrypt.Net.BCrypt;
 
+
 namespace drgndrop
 {
     public class Database
@@ -10,6 +11,7 @@ namespace drgndrop
         public static LiteDatabase DB;
         public static ILiteCollection<User> Users;
         public static ILiteCollection<InviteKey> InviteKeys;
+        public const string ADMIN_GUID = "00000000-0000-0000-0000-000000000000";
 
         public static void Initialize(string file, string password = "", bool shared = true)
         {
@@ -62,7 +64,13 @@ namespace drgndrop
         public static User? GetUserBySession(string session)
         {
             List<User> tempUsers = Users.Query().Where(x => x.SessionToken == session).ToList();
-            if (tempUsers.Count == 1) return tempUsers[0];
+            if (tempUsers.Count == 1)
+            {
+                if (tempUsers[0].GUID != ADMIN_GUID)
+                {
+                    return tempUsers[0];
+                }
+            }
             return null;
         }
 
@@ -82,8 +90,8 @@ namespace drgndrop
                 {
                     Name = name,
                     Password = Crypt.EnhancedHashPassword(password),
-                    GUID = "00000000-0000-0000-0000-000000000000",
-                    InvitedBy = "00000000-0000-0000-0000-000000000000",
+                    GUID = ADMIN_GUID,
+                    InvitedBy = ADMIN_GUID,
                     Creation = DateTimeOffset.Now.ToUnixTimeSeconds(),
                     Group = Group.Admin,
                     Uploads = new List<DrgnfileInfo>(),

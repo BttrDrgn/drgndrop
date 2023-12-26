@@ -45,6 +45,7 @@ namespace drgndrop
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             builder.Services.AddScoped<UserService>();
+            builder.Services.AddScoped<CookieService>();
 
             var app = builder.Build();
 
@@ -188,7 +189,12 @@ namespace drgndrop
 
                 writer.WriteLine($"[host]");
                 writer.WriteLine($"appname = \"Drgndrop\"");
+
+#if DEBUG
                 writer.WriteLine($"domain = \"localhost:5132\"");
+#else
+                writer.WriteLine($"domain = \"drgndrop.me\"");
+#endif
 
                 writer.WriteLine($"[file]");
                 writer.WriteLine($"maxfilesize = 50 # in MB");
@@ -220,16 +226,14 @@ namespace drgndrop
             RepoPath = toml.Get("file", "repopath", Path.Combine("C:", "drgndrop", "repo"));
             DatabasePath = toml.Get("file", "dbpath", Path.Combine("C:", "drgndrop", "database"));
 
-            if(GetArg("--delete-database") == "confirm")
-            {
-                if(File.Exists(Path.Combine(DatabasePath, "database.db")))
-                {
-                    File.Delete(Path.Combine(DatabasePath, "database.db"));
-                }
-            }
+#if DEBUG
+            string dbFile = "debug-database.db";
+#else
+            string dbFile = "database.db";
+#endif
 
             Database.Initialize(
-                Path.Combine(DatabasePath, "database.db"),
+                Path.Combine(DatabasePath, dbFile),
                 toml.Get("database", "password", ""),
                 toml.Get("database", "shared", true)
             );

@@ -5,6 +5,7 @@
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 @inject UserService UserService
+@inject CookieService CookieService
 
 <PageTitle>Register</PageTitle>
 
@@ -50,7 +51,7 @@
             if(user.PasswordCheck(password))
             {
                 UserService.CurrentUser = user;
-                await JS.InvokeVoidAsync("cookies.write", "session-token", user.SessionToken, 30);
+                await CookieService.WriteCookie(JS, "session-token", user.SessionToken, 30);
                 NavManager.NavigateTo("/upload");
                 StateHasChanged();
                 return true;

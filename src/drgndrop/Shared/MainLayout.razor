@@ -4,12 +4,13 @@
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 @inject UserService UserService
+@inject CookieService CookieService
 
 @if (MetaTags)
 {
     <HeadContent>
         <meta name="description" content="FOSS privacy focused file sharing platform">
-
+            
         <meta name="og:url" content="@(Program.Http)://@(Program.DomainName)">
         <meta name="og:type" content="website">
         <meta name="og:title" content="@Program.AppName">
@@ -28,7 +29,6 @@
 }
 
 <PageTitle>@Program.AppName</PageTitle>
-
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -50,10 +50,18 @@
     public static string Title = "";
     public static bool Ready = false;
     public bool MetaTags = false;
-    public Dictionary<string, string> Cookies = new Dictionary<string, string>();
 
     protected override async Task OnInitializedAsync()
     {
+        await CookieService.LoadCookies(JS);
+
+        var sessionToken = CookieService.GetCookie("session-token");
+        if (!string.IsNullOrEmpty(sessionToken))
+        {
+            UserService.Login(sessionToken);
+            Console.WriteLine(UserService.LoggedIn);
+        }
+
         Title = Utils.GetHeader(NavManager.Uri);
 
         if (Title != "Files")
@@ -63,6 +71,7 @@
         }
 
         NavManager.LocationChanged += LocationChanged;
+        Ready = true;
         await base.OnInitializedAsync();
     }
 
@@ -74,37 +83,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            string cookies = await JS.InvokeAsync<string>("cookies.read");
-            if (!string.IsNullOrEmpty(cookies))
-            {
-                var splitCookies = cookies.Split(";");
-                foreach (var cookie in splitCookies)
-                {
-                    var splitCookie = cookie.Split("=");
-                    Cookies.Add(splitCookie[0], splitCookie[1]);
-                }
-            }
-
-            string session = GetCookie("session-token");
-            if (!string.IsNullOrEmpty(session))
-            {
-                UserService.CurrentUser = Database.GetUserBySession(session);
-                StateHasChanged();
-            }
-        }
-
         await base.OnAfterRenderAsync(firstRender);
-    }
-
-    public string GetCookie(string key)
-    {
-        if(Cookies.TryGetValue(key, out var value))
-        {
-            return value;
-        }
-
-        return null;
     }
 }

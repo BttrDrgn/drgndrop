@@ -42,7 +42,13 @@
         }
         else
         {
-            Files = UserService?.CurrentUser?.Uploads;
+            var user = UserService?.CurrentUser;
+            if(user.Uploads == null) 
+            {
+                user.Uploads = new List<DrgnfileInfo>();
+                user.Update();
+            }
+            Files = user.Uploads;
         }
 
         await base.OnInitializedAsync();
