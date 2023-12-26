@@ -52,12 +52,6 @@
 
     protected override void OnInitialized()
     {
-        if (UserService.LoggedIn)
-        {
-            NavManager.NavigateTo("/upload");
-            return;
-        }
-
         var splitUrl = NavManager.Uri.Split('?');
         Key = splitUrl.Length > 1 ? Utils.GetQuery(in splitUrl[1], "key") : "";
 
@@ -67,6 +61,19 @@
         }
 
         base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (UserService.LoggedIn)
+            {
+                NavManager.NavigateTo("/upload");
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     public bool CheckKey(string key)

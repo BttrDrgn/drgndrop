@@ -31,15 +31,17 @@
     public string Password = "";
     public bool Attempted = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (UserService.LoggedIn)
+        if (firstRender)
         {
-            NavManager.NavigateTo("/upload");
-            return;
+            if (UserService.LoggedIn)
+            {
+                NavManager.NavigateTo("/upload");
+            }
         }
 
-        await base.OnInitializedAsync();
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     public async Task<bool> LoginUser(string username, string password)

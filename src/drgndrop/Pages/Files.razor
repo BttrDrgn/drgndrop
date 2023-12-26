@@ -1,10 +1,12 @@
 ﻿@page "/files/{FileID}"
 @using drgndrop;
+@using drgndrop.Services;
 @using Crypt = BCrypt.Net.BCrypt;
 @inject IWebHostEnvironment Environment
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
-@inject IHttpContextAccessor CtxAccessor;
+@inject IHttpContextAccessor CtxAccessor
+@inject UserService UserService
 
 <HeadContent>
     <meta name="og:title" content="@(Program.AppName) - @(DlFile != null ? PasswordCheck ? DlFile.Name : FileID : FileID)" />
@@ -59,6 +61,11 @@
         <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="@Utils.GetMIMEType(DlFile.Name)">
                 <a class="btn btn-secondary" href="@DownloadLink" target="_blank">Download</a>
         </span>
+
+        @if(Owner)
+        {
+            <button class="btn btn-danger">Delete File</button>
+        }
     }
 }
 else
@@ -76,6 +83,7 @@ else
     public bool PasswordCheck = false;
     public string Key = "";
     public string Description = "";
+    public bool Owner = false;
 
     protected override void OnInitialized()
     {
@@ -104,8 +112,21 @@ else
         {
             Description = "FOSS privacy focused file sharing platform";
         }
-        
+
 
         base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            if (UserService.CurrentUser != null)
+            {
+                Owner = UserService.CurrentUser.OwnsFile(FileID);
+                StateHasChanged();
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
     }
 }

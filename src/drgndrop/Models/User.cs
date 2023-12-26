@@ -49,6 +49,15 @@ namespace drgndrop
             return newKey;
         }
 
+        public bool OwnsFile(string id)
+        {
+            foreach (var file in Uploads)
+            {
+                if (file.ID == id) return true;
+            }
+            return false;
+        }
+
         public void Update()
         {
             Database.Users.Update(this);

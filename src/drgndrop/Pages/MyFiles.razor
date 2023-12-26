@@ -20,7 +20,11 @@
             @for (int i = 0; i < Files.Count; i++)
             {
                 <tr>
-                    <td><button class="btn me-3"><span class="oi oi-link-intact text-white"></span></button>@Files[i].ID</td>
+                    <td>
+                        <a class="btn me-3" href="@GetFileLink(Files[i].ID, Files[i].PasswordHash)" target="_blank">
+                            <span class="oi oi-link-intact text-white"/>
+                        </a>@Files[i].ID
+                    </td>
                     <td>@Files[i].Name</td>
                     <td>@Utils.ParseEpoch(Files[i].Creation)</td>
                     <td>@Utils.ParseBytes(Files[i].Size)</td>
@@ -36,21 +40,35 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
         if (!UserService.LoggedIn)
         {
             NavManager.NavigateTo("/login");
+            return;
         }
         else
         {
             var user = UserService?.CurrentUser;
-            if(user.Uploads == null) 
+            if (user.Uploads == null)
             {
                 user.Uploads = new List<DrgnfileInfo>();
                 user.Update();
             }
             Files = user.Uploads;
+            StateHasChanged();
         }
 
-        await base.OnInitializedAsync();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public string GetFileLink(string id, string key = "")
+    {
+        string link = $"{Program.Http}://{Program.DomainName}/files/{id}";
+        if(!string.IsNullOrEmpty(key)) link += $"?key={key}";
+        return link;
     }
 }
