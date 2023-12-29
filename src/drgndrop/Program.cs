@@ -1,4 +1,5 @@
 using drgndrop.Services;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Http.Extensions;
 using SevenZip;
 using System.IO;
@@ -56,12 +57,13 @@ namespace drgndrop
                 app.UseHsts();
             }
 
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseStaticFiles();
             app.UseRouting();
 
             app.MapBlazorHub();
+
             app.MapFallbackToPage("/_Host");
 
             app.MapGet("/", async (HttpContext ctx) =>
@@ -265,17 +267,25 @@ namespace drgndrop
         {
             foreach(var folder in Directory.GetDirectories(UploadPath))
             {
-                foreach(var file in Directory.GetFiles(folder))
+                var files = Directory.GetFiles(folder);
+                if (files.Contains("data"))
                 {
-                    if(file.EndsWith("data") && !Utils.IsFileLocked(file))
+                    foreach (var file in Directory.GetFiles(folder))
                     {
-                        var info = new FileInfo(Path.Combine(UploadPath, folder, file));
-                        if (info.Length <= 0)
+                        if (file == "data" && !Utils.IsFileLocked(file))
                         {
-                            Directory.Delete(Path.Combine(UploadPath, folder), true);
-                            break;
+                            var info = new FileInfo(Path.Combine(UploadPath, folder, file));
+                            if (info.Length <= 0)
+                            {
+                                Directory.Delete(Path.Combine(UploadPath, folder), true);
+                                break;
+                            }
                         }
                     }
+                }
+                else
+                {
+                    Directory.Delete(Path.Combine(UploadPath, folder), true);
                 }
             }
         }

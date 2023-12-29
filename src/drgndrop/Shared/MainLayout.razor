@@ -59,7 +59,6 @@
         if (!string.IsNullOrEmpty(sessionToken))
         {
             UserService.Login(sessionToken);
-            Console.WriteLine(UserService.LoggedIn);
         }
 
         Title = Utils.GetHeader(NavManager.Uri);
