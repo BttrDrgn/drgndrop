@@ -18,7 +18,7 @@ namespace drgndrop
             }
             catch(Exception e)
             {
-                Console.WriteLine(e.Message);
+                Logger.ErrorLog(e.Message);
             }
         }
 
@@ -30,7 +30,7 @@ namespace drgndrop
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Logger.ErrorLog(e.Message);
                 return failsafe;
             }
         }

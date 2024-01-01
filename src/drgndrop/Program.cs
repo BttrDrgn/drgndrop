@@ -14,17 +14,22 @@ namespace drgndrop
 
 #if DEBUG
         public static string Http = "http";
+        public static string UploadPath = Path.Combine("C:", "drgndrop", "debug", "uploads");
+        public static string TempPath = Path.Combine("C:", "drgndrop", "debug", "temp");
+        public static string RepoPath = Path.Combine("C:", "drgndrop", "debug", "repo");
+        public static string DatabasePath = Path.Combine("C:", "drgndrop", "debug", "database");
 #else
         public static string Http = "https";
+        public static string UploadPath = Path.Combine("C:", "drgndrop", "uploads");
+        public static string TempPath = Path.Combine("C:", "drgndrop", "temp");
+        public static string RepoPath = Path.Combine("C:", "drgndrop", "repo");
+        public static string DatabasePath = Path.Combine("C:", "drgndrop", "database");
 #endif
 
         public static string AppName = "Drgndrop";
         public static string DomainName = "localhost:5132";
-        public static string UploadPath = Path.Combine("C:", "drgndrop", "uploads");
-        public static string TempPath = Path.Combine("C:", "drgndrop", "temp");
         public static string LibPath = Path.Combine("C:", "drgndrop", "lib");
-        public static string RepoPath = Path.Combine("C:", "drgndrop", "repo");
-        public static string DatabasePath = Path.Combine("C:", "drgndrop", "db");
+
         public static long MaxFileSize = 50L * 1024 * 1024;
         public static string CommitSHA = "";
 
@@ -184,19 +189,36 @@ namespace drgndrop
 
         private static void Initialize(string[] args)
         {
+#if DEBUG
             string path = "config.toml";
+#else
+            string path = "debug-config.toml";
+#endif 
             if (!File.Exists(path))
             {
                 StreamWriter writer = new StreamWriter(path);
 
-                writer.WriteLine($"[host]");
-                writer.WriteLine($"appname = \"Drgndrop\"");
+
 
 #if DEBUG
+                writer.WriteLine($"[host]");
+                writer.WriteLine($"appname = \"Drgndrop - Debug\"");
                 writer.WriteLine($"domain = \"localhost:5132\"");
+                writer.WriteLine($"[file]");
+                writer.WriteLine($"maxfilesize = 50 # in MB");
+                writer.WriteLine($"uploadpath = \"C:/drgndrop/debug/uploads/\"");
+                writer.WriteLine($"temppath = \"C:/drgndrop/debug/temp/\"");
+                writer.WriteLine($"libpath = \"C:/drgndrop/lib/\"");
+                writer.WriteLine($"repopath = \"C:/drgndrop/debug/repo/\"");
+                writer.WriteLine($"dbpath = \"C:/drgndrop/debug/database/\"");
+
+                writer.WriteLine($"[database]");
+                writer.WriteLine($"password = \"\"");
+                writer.WriteLine($"shared = true");
 #else
+                writer.WriteLine($"[host]");
+                writer.WriteLine($"appname = \"Drgndrop\"");
                 writer.WriteLine($"domain = \"drgndrop.me\"");
-#endif
 
                 writer.WriteLine($"[file]");
                 writer.WriteLine($"maxfilesize = 50 # in MB");
@@ -209,7 +231,7 @@ namespace drgndrop
                 writer.WriteLine($"[database]");
                 writer.WriteLine($"password = \"\"");
                 writer.WriteLine($"shared = true");
-
+#endif
                 writer.Close();
             }
 
@@ -228,11 +250,7 @@ namespace drgndrop
             RepoPath = toml.Get("file", "repopath", Path.Combine("C:", "drgndrop", "repo"));
             DatabasePath = toml.Get("file", "dbpath", Path.Combine("C:", "drgndrop", "database"));
 
-#if DEBUG
-            string dbFile = "debug-database.db";
-#else
             string dbFile = "database.db";
-#endif
 
             Database.Initialize(
                 Path.Combine(DatabasePath, dbFile),
@@ -250,6 +268,8 @@ namespace drgndrop
             if (Directory.Exists(Path.Combine(RepoPath, ".git")))
             {
             }
+
+            Cmd.Initialize();
         }
 
         public static void FlushTempCache()

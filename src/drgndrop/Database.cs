@@ -1,5 +1,6 @@
 ﻿using LiteDB;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System;
 using System.Xml.Linq;
 using Crypt = BCrypt.Net.BCrypt;
 
@@ -34,19 +35,17 @@ namespace drgndrop
             if (initialSetup)
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("This is the initial setup of the database.");
+                Logger.InfoLog("This is the initial setup of the database.");
                 Console.ResetColor();
-                Console.Write("\n");
 
                 if (GetUserByName("admin") == null)
                 {
                     CreateAdminUser("changeme");
 
-                    Console.WriteLine("A user has been created under the name \"admin\" and the password is \"changeme\"");
-                    Console.Write("\n");
+                    Logger.InfoLog("A user has been created under the name \"admin\" and the password is \"changeme\"");
 
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("It is highly recommended you change the password prior to making the interface public!");
+                    Logger.WarningLog("It is highly recommended you change the password prior to making the interface public!");
                     Console.ResetColor();
 
                 }
@@ -91,6 +90,7 @@ namespace drgndrop
                     Name = name,
                     Password = Crypt.EnhancedHashPassword(password),
                     GUID = ADMIN_GUID,
+                    SessionToken = Guid.NewGuid().ToString(),
                     InvitedBy = ADMIN_GUID,
                     Creation = DateTimeOffset.Now.ToUnixTimeSeconds(),
                     Group = Group.Admin,
@@ -133,6 +133,10 @@ namespace drgndrop
             return false;
         }
 
+        public static List<User> GetUsers()
+        {
+            return Users.Query().ToList();
+        }
 
         //INVITE KEYS
         public static InviteKey CreateInviteKey(User? user)

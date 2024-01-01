@@ -1,6 +1,11 @@
 ﻿.console {
     color: white;
     background-color: rgb(46, 46, 46);
-    height: 25rem;
+    height: 30rem;
     overflow: auto;
+    font-family: Consolas;
+}
+
+.console p {
+    margin-bottom: 0px;
 }

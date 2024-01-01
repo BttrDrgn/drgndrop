@@ -94,6 +94,7 @@
                 if (user != null)
                 {
                     await CookieService.WriteCookie(JS, "session-token", user.SessionToken, 30);
+                    UserService.Login(user.SessionToken);
                     NavManager.NavigateTo("/upload");
                     return true;
                 }

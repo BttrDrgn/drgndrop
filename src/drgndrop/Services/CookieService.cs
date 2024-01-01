@@ -8,6 +8,7 @@ namespace drgndrop.Services
 
         public async Task LoadCookies(IJSRuntime js)
         {
+            Cookies = new Dictionary<string, string>();
             string cookieString = await js.InvokeAsync<string>("cookies.read");
             if (!string.IsNullOrEmpty(cookieString))
             {
@@ -31,6 +32,12 @@ namespace drgndrop.Services
             await js.InvokeVoidAsync("cookies.write", key, value, days);
             if(!Cookies.ContainsKey(key)) Cookies.Add(key, value);
             else Cookies[key] = value;
+        }
+
+        public async Task DeleteCookie(IJSRuntime js, string key)
+        {
+            await js.InvokeVoidAsync("cookies.delete", key);
+            if (Cookies.ContainsKey(key)) Cookies.Remove(key);
         }
     }
 }

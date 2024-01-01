@@ -105,14 +105,17 @@
 
         Timer.Dispose();
 
-        var user = UserService.CurrentUser;
-        if (user.Uploads == null) user.Uploads = new List<DrgnfileInfo>();
+        if (UserService.LoggedIn)
+        {
+            var user = UserService?.CurrentUser;
+            if (user.Uploads == null) user.Uploads = new List<DrgnfileInfo>();
 
-        var uploadInfo = drgnfile.Info;
-        uploadInfo.PasswordHash = Password;
-        user.Uploads.Add(uploadInfo);
+            var uploadInfo = drgnfile.Info;
+            uploadInfo.PasswordHash = Password;
+            user?.Uploads.Add(uploadInfo);
 
-        user.Update();
+            user?.Update();
+        }
 
         NavManager.NavigateTo(LinkToFile);
     }

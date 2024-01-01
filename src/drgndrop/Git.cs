@@ -41,7 +41,7 @@ namespace drgndrop
                 else
                 {
                     // Handle error responses
-                    Console.WriteLine($"Error: {response.StatusCode} - {response.ReasonPhrase}");
+                    Logger.ErrorLog($"{response.StatusCode} - {response.ReasonPhrase}");
                 }
             }
         }

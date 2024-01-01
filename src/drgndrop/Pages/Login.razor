@@ -50,12 +50,12 @@
         User? user = Database.GetUserByName(username);
         if(user != null)
         {
+            if(user.GUID == Database.ADMIN_GUID) return false;
             if(user.PasswordCheck(password))
             {
-                UserService.CurrentUser = user;
                 await CookieService.WriteCookie(JS, "session-token", user.SessionToken, 30);
+                UserService.Login(user.SessionToken);
                 NavManager.NavigateTo("/upload");
-                StateHasChanged();
                 return true;
             }
         }

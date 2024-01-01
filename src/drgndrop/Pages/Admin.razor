@@ -29,203 +29,25 @@
     {
         <h1>Console</h1>
         <div class="container-fluid console">
-            @foreach(var line in Cmd.Output)
+            @foreach(var line in Console.Output)
             {
                 <p>@line</p>
             }
         </div>
-        <input class="form-contorl input-field" type="text" id="buffer" @bind="@Cmd.Buffer"/>
-        <button class="btn btn-primary" @onclick="() => Cmd.Execute() ">Send</button>
+        <input class="form-contorl input-field" type="text" id="buffer" @bind="@Console.Buffer" />
+        <button class="btn btn-primary" @onclick="() => { Console.Execute(); }">Send</button>
     }
 </div>
 
 @code
 {
-    public class Console
-    {
-        public User? User { get; set; }
-        public List<string> Output { get; set; } = new List<string>();
-        public string Buffer { get; set; }
-        public Dictionary<string, Action<Console, string[]>> Commands = new Dictionary<string, Action<Console, string[]>>()
-        {
-            { "cls", (cmd, args) =>
-            {
-                cmd.Output = new List<string>();
-            }},
-
-            { "pw", (cmd, args) =>
-            {
-                if(args.Count() == 4)
-                {
-                    User? user = Database.GetUserByName(args[1]);
-                    if(user == null)
-                    {
-                        cmd.WriteLine($"err: no user found by name \"{args[1]}\"");
-                        return;
-                    }
-
-                    if(!user.PasswordCheck(args[2]))
-                    {
-                        cmd.WriteLine($"err: oldpass did not match");
-                        return;
-                    }
-
-                    if(user.ChangePassword(args[2], args[3]))
-                    {
-                        cmd.WriteLine($"info: password for \"{args[1]}\" has been changed");
-                    }
-                    else
-                    {
-                        cmd.WriteLine($"err: oldpass did not match");
-                    }
-                }
-                else
-                {
-                    cmd.WriteLine("usage: pw <user> <oldpass> <newpass>");
-                }
-            }},
-
-            { "group", (cmd, args) =>
-            {
-                if(args.Count() == 3)
-                {
-                    User? user = Database.GetUserByName(args[1]);
-                    bool limitations = cmd.User.Name != "admin";
-
-                    Group newGroup = Group.User;
-                    if(!int.TryParse(args[2], out var parsed))
-                    {
-                        cmd.WriteLine($"err: unable to parse group argument, please make sure it is an interger!");
-                        return;
-                    }
-                    if(parsed > (int)Group.Count - 1) parsed = (int)Group.Count - 1;
-                    if(parsed < 0) parsed = (int)Group.User;
-                    newGroup = (Group)parsed;
-
-                    if(user == null)
-                    {
-                        cmd.WriteLine($"err: no user found by name \"{args[1]}\"");
-                        return;
-                    }
-
-                    if(limitations)
-                    {
-                        if(user.GUID == cmd.User.GUID)
-                        {
-                            cmd.WriteLine($"err: unable to change your own group");
-                            return;
-                        }
-
-                        if(user.Group >= cmd.User.Group)
-                        {
-                            cmd.WriteLine($"err: unable to change user whos group is greater than or equal to the current logged in console user");
-                            return;
-                        }
-
-                        if(newGroup >= cmd.User.Group)
-                        {
-                            cmd.WriteLine($"err: unable to change user's group to that which is greater than or equal to the current logged in console user");
-                            return;
-                        }
-                    }
-                    cmd.WriteLine($"info: user \"{user.Name}\" has been set to \"{newGroup}\" from \"{user.Group}\"");
-
-                    user.Group = newGroup;
-                    user.Update();
-                }
-                else
-                {
-                    cmd.WriteLine("usage: group <user> <group:int>");
-                }
-            }},
-
-            { "keys", (cmd, args) =>
-            {
-                if(args.Count() == 2)
-                {
-                    User? user = Database.GetUserByName(args[1]);
-                    if(user == null)
-                    {
-                        cmd.WriteLine($"err: no user found by name \"{args[1]}\"");
-                        return;
-                    }
-
-                    var keys = Database.GetKeys(user);
-                    cmd.WriteLine($"Value | Created | Used");
-                    foreach(var key in keys)
-                    {
-                        cmd.WriteLine($"{key.Value} : {key.Creation} : {!string.IsNullOrEmpty(key.UsedBy)}");
-                    }
-                }
-                else
-                {
-                    cmd.WriteLine("usage: keys <user>");
-                }
-            }},
-
-            { "genkey", (cmd, args) =>
-            {
-                if(args.Count() == 2)
-                {
-                    User? user = Database.GetUserByName(args[1]);
-                    if(user == null)
-                    {
-                        cmd.WriteLine($"err: no user found by name \"{args[1]}\"");
-                        return;
-                    }
-
-                    var key = user.CreateInviteKey();
-                    cmd.WriteLine($"Key created for \"{user.Name}\": \"{key.Value}\"");
-                }
-                else
-                {
-                    cmd.WriteLine("usage: genkey <user>");
-                }
-            }},
-        };
-
-        public Console(User? user)
-        {
-            User = user;
-            Output.Add($"{Program.AppName} admin console");
-            Output.Add($"logged in as {user.Name}");
-        }
-
-        public void Execute()
-        {
-            WriteLine($"> {Buffer}");
-
-            string cmd = "";
-
-            var split = Buffer.Split(" ");
-            if (split.Length > 0) cmd = split[0];
-            else split = new string[1] { Buffer };
-
-            if(Commands.TryGetValue(cmd, out var command))
-            {
-                command.Invoke(this, split);
-            }
-            else
-            {
-                WriteLine($"err: command \"{cmd}\" not found");
-            }
-
-            Buffer = "";
-        }
-
-        public void WriteLine(string msg)
-        {
-            this.Output.Add(msg);
-        }
-    }
-
     public string Username = "";
     public string Password = "";
     public User? User;
     public bool LoggedIn = false;
     public bool Allowed => User?.Group >= Group.Admin;
     public bool Attempted = false;
-    public Console Cmd = null;
+    public Cmd Console = null;
 
     public bool AccountCheck(string username, string password)
     {
@@ -237,7 +59,7 @@
             {
                 LoggedIn = user.PasswordCheck(password);
                 User = user;
-                Cmd = new Console(user);
+                Console = new Cmd(user);
                 return true;
             }
         }

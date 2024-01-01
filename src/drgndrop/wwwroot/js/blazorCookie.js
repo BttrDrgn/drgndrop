@@ -10,9 +10,11 @@ window.cookies = {
             expires = "";
         }
         document.cookie = key + "=" + value + expires + "; path=/";
-        console.log(document.cookie);
     },
     read: () => {
         return document.cookie;
+    },
+    delete: (key) => {
+        document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     }
 }
