@@ -140,6 +140,7 @@ namespace drgndrop
                         }
                         else
                         {
+                            if (isMedia) goto render;
                             metaTags = Utils.GenerateFileMetaTags(path, drgnfile: drgnfile);
                         }
 
