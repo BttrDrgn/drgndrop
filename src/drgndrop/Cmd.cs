@@ -1,4 +1,6 @@
-﻿namespace drgndrop
+﻿using Microsoft.VisualBasic;
+
+namespace drgndrop
 {
     public class Command
     {
@@ -241,10 +243,18 @@
                         string fileId = args[1];
                         bool deleted = false;
                         string filePath = Path.Combine(Program.UploadPath, fileId);
+
                         if (Directory.Exists(filePath))
                         {
-                            Directory.Delete(filePath, true);
-                            deleted = true;
+                            try
+                            {
+                                Directory.Delete(filePath, true);
+                                deleted = true;
+                            }
+                            catch (Exception e) 
+                            {
+                                cmd.WriteLine($"err: {e.Message}");
+                            }
                         }
                         else
                         {

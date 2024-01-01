@@ -190,15 +190,13 @@ namespace drgndrop
         private static void Initialize(string[] args)
         {
 #if DEBUG
-            string path = "config.toml";
-#else
             string path = "debug-config.toml";
+#else
+            string path = "config.toml";
 #endif 
             if (!File.Exists(path))
             {
                 StreamWriter writer = new StreamWriter(path);
-
-
 
 #if DEBUG
                 writer.WriteLine($"[host]");
@@ -288,24 +286,17 @@ namespace drgndrop
             foreach(var folder in Directory.GetDirectories(UploadPath))
             {
                 var files = Directory.GetFiles(folder);
-                if (files.Contains("data"))
+                foreach (var file in Directory.GetFiles(folder))
                 {
-                    foreach (var file in Directory.GetFiles(folder))
+                    if (file.EndsWith("data") && !Utils.IsFileLocked(file))
                     {
-                        if (file == "data" && !Utils.IsFileLocked(file))
+                        var info = new FileInfo(Path.Combine(UploadPath, folder, file));
+                        if (info.Length <= 0)
                         {
-                            var info = new FileInfo(Path.Combine(UploadPath, folder, file));
-                            if (info.Length <= 0)
-                            {
-                                Directory.Delete(Path.Combine(UploadPath, folder), true);
-                                break;
-                            }
+                            Directory.Delete(Path.Combine(UploadPath, folder), true);
+                            break;
                         }
                     }
-                }
-                else
-                {
-                    Directory.Delete(Path.Combine(UploadPath, folder), true);
                 }
             }
         }
