@@ -33,11 +33,11 @@
         switch (Utils.GetMediaType(Utils.GetMIMEType(DlFile.Name)))
         {
             case Utils.MediaType.Image:
-                    <img class="img-fluid img-thumbnail" src="@DownloadLink" />
+                    <img class="img-fluid img-thumbnail" style="width: 25rem" src="@DownloadLink" />
                 break;
 
             case Utils.MediaType.Video:
-                    <div class="ratio ratio-16x9">
+                    <div class="ratio ratio-16x9" style="width: 25rem">
                         <iframe src="@DownloadLink" allowfullscreen></iframe>
                     </div>
                 break;
