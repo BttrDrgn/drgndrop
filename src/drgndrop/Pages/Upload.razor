@@ -100,24 +100,26 @@
 
         var drgnfile = GenerateNewFile(DroppedFile.Size);
         await ProcessFile(drgnfile);
-
-        if(AutoCopy) CopyToClipboard();
-
         Timer.Dispose();
-
-        if (UserService.LoggedIn)
+        if (!Errored)
         {
-            var user = UserService?.CurrentUser;
-            if (user.Uploads == null) user.Uploads = new List<DrgnfileInfo>();
+            if (AutoCopy) CopyToClipboard();
 
-            var uploadInfo = drgnfile.Info;
-            uploadInfo.PasswordHash = Password;
-            user?.Uploads.Add(uploadInfo);
 
-            user?.Update();
+            if (UserService.LoggedIn)
+            {
+                var user = UserService?.CurrentUser;
+                if (user.Uploads == null) user.Uploads = new List<DrgnfileInfo>();
+
+                var uploadInfo = drgnfile.Info;
+                uploadInfo.PasswordHash = Password;
+                user?.Uploads.Add(uploadInfo);
+
+                user?.Update();
+            }
+
+            NavManager.NavigateTo(LinkToFile);
         }
-
-        NavManager.NavigateTo(LinkToFile);
     }
 
     public Drgnfile GenerateNewFile(long size)
@@ -165,17 +167,20 @@
         }
         finally
         {
-            await drgnfile.Save(FilePath, cs);
+            if (!Errored)
+            {
+                await drgnfile.Save(FilePath, cs);
+
+                if (Encrypted) LinkToFile = $"files/{FileID}?key={Password}";
+                else LinkToFile = $"files/{FileID}";
+                Finished = true;
+            }
+
+            Uploading = false;
 
             us?.Dispose();
             rs?.Dispose();
             cs?.Dispose();
-
-            if (Encrypted) LinkToFile = $"files/{FileID}?key={Password}";
-            else LinkToFile = $"files/{FileID}";
-
-            Uploading = false;
-            Finished = true;
         }
     }
 
