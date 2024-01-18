@@ -92,6 +92,7 @@ namespace drgndrop
                         }
                     }
                 });
+                
                 RegisterCommand("pw", "usage: pw (user:string) (oldpass:string) (newpass:string); change passwords", (cmd, args) =>
                 {
                     if (args.Count() == 4)
@@ -124,26 +125,17 @@ namespace drgndrop
                         cmd.WriteLine("usage: pw (user:string) (oldpass:string) (newpass:string)");
                     }
                 });
+                
                 RegisterCommand("cls", "usage: cls; clears the command output buffer", (cmd, _) =>
                 {
                     cmd.Output = new List<string>();
                 });
-                RegisterCommand("group", "usage: group (user:string) (group:int); changes the group of a user, has limitations", (cmd, args) =>
+                
+                RegisterCommand("group", "usage: group (user:string) (group:string); changes the group of a user, has limitations", (cmd, args) =>
                 {
                     if (args.Count() == 3)
                     {
                         User? user = Database.GetUserByName(args[1]);
-                        bool limitations = cmd.User.Name != "admin";
-
-                        Group newGroup = Group.User;
-                        if (!int.TryParse(args[2], out var parsed))
-                        {
-                            cmd.WriteLine($"err: unable to parse group argument, please make sure it is an interger!");
-                            return;
-                        }
-                        if (parsed > (int)Group.Count - 1) parsed = (int)Group.Count - 1;
-                        if (parsed < 0) parsed = (int)Group.User;
-                        newGroup = (Group)parsed;
 
                         if (user == null)
                         {
@@ -151,29 +143,66 @@ namespace drgndrop
                             return;
                         }
 
-                        if (limitations)
+                        bool limitations = cmd.User.GUID != Database.ADMIN_GUID;
+
+                        if (limitations && user.GUID == cmd.User.GUID)
                         {
-                            if (user.GUID == cmd.User.GUID)
-                            {
-                                cmd.WriteLine($"err: unable to change your own group");
-                                return;
-                            }
-
-                            if (user.Group >= cmd.User.Group)
-                            {
-                                cmd.WriteLine($"err: unable to change user whos group is greater than or equal to the current logged in console user");
-                                return;
-                            }
-
-                            if (newGroup >= cmd.User.Group)
-                            {
-                                cmd.WriteLine($"err: unable to change user's group to that which is greater than or equal to the current logged in console user");
-                                return;
-                            }
+                            cmd.WriteLine($"err: unable to change your own group");
+                            return;
                         }
-                        cmd.WriteLine($"info: user \"{user.Name}\" has been set to \"{newGroup}\" from \"{user.Group}\"");
 
-                        user.Group = newGroup;
+                        Group newGroup;
+
+                        switch (args[2].ToLower())
+                        {
+                            case "user":
+                                newGroup = Group.User;
+                                break;
+
+                            case "donor":
+                            case "donator":
+                                newGroup = Group.Donor;
+                                break;
+
+                            case "mod":
+                            case "moderator":
+                                newGroup = Group.Moderator;
+                                break;
+
+                            case "admin":
+                                newGroup = Group.Admin;
+                                break;
+
+                            case "owner":
+                                newGroup = Group.Owner;
+                                break;
+
+                            default:
+                                cmd.WriteLine($"err: unable to determine which group to be set. options: user, donor, donator, mod, moderator, admin, owner");
+                                return;
+                        }
+
+                        bool isInGroup = user.IsInGroup(newGroup);
+
+                        if(isInGroup)
+                        {
+                            user.UnsetGroup(newGroup);
+
+                            if (user.Group == 0)
+                            {
+                                cmd.WriteLine($"info: user \"{user.Name}\" has been removed from all groups and set back to \"{Group.User}\"");
+                                user.SetGroup(Group.User);
+                            }
+                            else cmd.WriteLine($"info: user \"{user.Name}\" has been removed from group \"{newGroup}\"");
+                        }
+                        else
+                        {
+                            user.SetGroup(newGroup);
+                            cmd.WriteLine($"info: user \"{user.Name}\" has been added to group \"{newGroup}\"");
+                        }
+
+                        
+
                         user.Update();
                     }
                     else
@@ -181,6 +210,7 @@ namespace drgndrop
                         cmd.WriteLine("usage: group (user:string) (group:int)");
                     }
                 });
+                
                 RegisterCommand("keys", "usage: keys (user:string); prints all keys and information that the user has", (cmd, args) =>
                 {
                     if (args.Count() == 2)
@@ -204,6 +234,7 @@ namespace drgndrop
                         cmd.WriteLine("usage: keys (user:string)");
                     }
                 });
+                
                 RegisterCommand("genkey", "usage: genkey (user:string) [count:int]; generates keys for the user", (cmd, args) =>
                 {
                     if (args.Count() >= 2)
@@ -236,6 +267,7 @@ namespace drgndrop
                         cmd.WriteLine("usage: genkey (user:string)");
                     }
                 });
+                
                 RegisterCommand("del", "usage: del (fileid:string)", (cmd, args) =>
                 {
                     if(args.Count() == 2)

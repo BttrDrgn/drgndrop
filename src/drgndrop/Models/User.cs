@@ -2,13 +2,13 @@
 
 namespace drgndrop
 {
-    public enum Group
+    [Flags] public enum Group
     {
-        User = 0,
-        Moderator,
-        Admin,
-        Owner,
-        Count
+        User = 1 << 0,
+        Donor = 1 << 1,
+        Moderator = 1 << 2,
+        Admin = 1 << 3,
+        Owner = 1 << 4,
     }
 
     public class User
@@ -61,6 +61,21 @@ namespace drgndrop
         public void Update()
         {
             Database.Users.Update(this);
+        }
+
+        public bool IsInGroup(Group group)
+        {
+            return (Group & group) == group;
+        }
+
+        public void SetGroup(Group group)
+        {
+            Group |= group;
+        }
+
+        public void UnsetGroup(Group group)
+        {
+            Group &= ~group;
         }
     }
 }
