@@ -1,4 +1,5 @@
 ﻿@page "/register"
+@using System.Text.RegularExpressions;
 @using drgndrop;
 @using drgndrop.Services;
 @inject IWebHostEnvironment Environment
@@ -21,6 +22,10 @@
             <input class="form-control input-field" type="password" id="password" @bind="@Password" />
         </div>
         <button class="btn btn-primary" @onclick="() => CreateUser(Username, Password, InviteKey) ">Submit</button>
+        @if(Errored)
+        {
+            <small class="text-muted">@ErrorMessage</small>
+        }
     }
     else
     {
@@ -49,6 +54,9 @@
     public string Password = "";
     public InviteKey? InviteKey = null;
     public bool Attempted = false;
+
+    public string ErrorMessage = "";
+    public bool Errored => !string.IsNullOrEmpty(ErrorMessage);
 
     protected override void OnInitialized()
     {
@@ -86,6 +94,19 @@
 
     public async Task<bool> CreateUser(string username, string password, InviteKey key)
     {
+        if (!CheckKey(key.Value))
+        {
+            ErrorMessage = "This key has already been used";
+            NavManager.NavigateTo("/register");
+            return false;
+        }
+
+        if (!Regex.IsMatch(username, "^[\\x00-\\x7F0-9]+$"))
+        {
+            ErrorMessage = "Username must not contain any special characters";
+            return false;
+        }
+
         if(Database.GetUserByName(username) == null)
         {
             if(Database.CreateUser(username, password, key))
