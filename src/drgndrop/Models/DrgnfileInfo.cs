@@ -1,4 +1,6 @@
-﻿namespace drgndrop
+﻿using drgndrop.Models;
+
+namespace drgndrop
 {
     public class DrgnfileInfo
     {
@@ -7,6 +9,6 @@
         public long Creation { get; set; }
         public long Size { get; set; }
         public string PasswordHash { get; set; }
-        public bool IsEncrypted => !String.IsNullOrEmpty(PasswordHash);
+        public bool IsEncrypted => !string.IsNullOrEmpty(PasswordHash);
     }
 }

@@ -577,6 +577,18 @@ namespace drgndrop
             }
         }
 
+        public static async Task IvokeAsyncInterval(TimeSpan timeSpan, Func<Task> action, bool now = false)
+        {
+            Task _;
+            if (now) _ = action();
+
+            var periodicTimer = new PeriodicTimer(timeSpan);
+            while (await periodicTimer.WaitForNextTickAsync())
+            {
+                _ = action();
+            }
+        }
+
         public static string GetHeader(string url)
         {
             if(PageHeaders.TryGetValue(GetRootPath(url).ToLower(), out var header))

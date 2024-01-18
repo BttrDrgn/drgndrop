@@ -214,6 +214,9 @@ namespace drgndrop
                 writer.WriteLine($"[database]");
                 writer.WriteLine($"password = \"\"");
                 writer.WriteLine($"shared = true");
+
+                writer.WriteLine($"[git]");
+                writer.WriteLine($"repo = \"BttrDrgn/drgndrop\"");
 #else
                 writer.WriteLine($"[host]");
                 writer.WriteLine($"appname = \"Drgndrop\"");
@@ -230,6 +233,9 @@ namespace drgndrop
                 writer.WriteLine($"[database]");
                 writer.WriteLine($"password = \"\"");
                 writer.WriteLine($"shared = true");
+
+                writer.WriteLine($"[git]");
+                writer.WriteLine($"repo = \"BttrDrgn/drgndrop\"");
 #endif
                 writer.Close();
             }
@@ -249,6 +255,8 @@ namespace drgndrop
             RepoPath = toml.Get("file", "repopath", Path.Combine("C:", "drgndrop", "repo"));
             DatabasePath = toml.Get("file", "dbpath", Path.Combine("C:", "drgndrop", "database"));
 
+            Git.Repo = toml.Get("git", "repo", "BttrDrgn/drgndrop");
+
             string dbFile = "database.db";
 
             Database.Initialize(
@@ -259,13 +267,13 @@ namespace drgndrop
 
             SevenZipBase.SetLibraryPath(Path.Combine(LibPath, "7z", "x64", "7za.dll"));
 
-            Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushTempCache, true);
-            Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushNullData, true);
-
-            Git.GatherCommits();
+            var _ = Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushTempCache, true);
+            _ = Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushNullData, true);
+            _ = Utils.IvokeAsyncInterval(TimeSpan.FromMinutes(30), Git.GatherCommits, true);
 
             if (Directory.Exists(Path.Combine(RepoPath, ".git")))
             {
+
             }
 
             Cmd.Initialize();

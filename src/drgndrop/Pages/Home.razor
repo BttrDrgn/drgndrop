@@ -13,4 +13,29 @@
     {
         <h1>Welcome back @UserService.CurrentUser?.Name</h1>
     }
+
+    <div class="row">
+        <div class="col">
+        </div>
+        <div class="col">
+            <h2>Git Updates</h2>
+            <div class="list-group">
+                @foreach(var commit in Git.Commits)
+                {
+                    if (Git.LocalSHA == commit.SHA)
+                    {
+                        <div class="list-group-item text-light" style="background-color: #373d45">
+                            <p><a href="@commit.Author.URL"><img class="img-fluid rounded-circle" width="32" height="32" src="@commit.Author.AvatarURL" /> @commit.Author.Name</a> : @commit.Message</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group-item bg-dark text-light">
+                            <p><a href="@commit.Author.URL"><img class="img-fluid rounded-circle" width="32" height="32" src="@commit.Author.AvatarURL" /> @commit.Author.Name</a> : @commit.Message</p>
+                        </div>                
+                    }
+                }
+            </div>
+        </div>
+    </div>
 </div>
