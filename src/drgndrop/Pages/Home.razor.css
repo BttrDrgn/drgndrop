@@ -1,0 +1,21 @@
+﻿/*Desktop*/
+@media (min-width: 641px) {
+    .git-commit {
+        font-size: 1rem;
+    }
+
+    .git-author-avatar {
+        display: block;
+    }
+}
+
+/*Mobile*/
+@media (max-width: 640.98px) {
+    .git-commit {
+        font-size: 0.8rem;
+    }
+
+    .git-author-avatar {
+        display: none;
+    }
+}
