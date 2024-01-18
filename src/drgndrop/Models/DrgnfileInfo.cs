@@ -1,6 +1,4 @@
-﻿using drgndrop.Models;
-
-namespace drgndrop
+﻿namespace drgndrop
 {
     public class DrgnfileInfo
     {
