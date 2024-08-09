@@ -1,0 +1,76 @@
+﻿@page "/reset"
+@using System.Text.RegularExpressions;
+@using drgndrop;
+@using drgndrop.Services;
+@inject IWebHostEnvironment Environment
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+@inject UserService UserService
+@inject CookieService CookieService
+
+<PageTitle>Reset</PageTitle>
+
+<div class="container-fluid">
+    @if (!Success)
+    {
+        <div class="form-group">
+            <label for="username">Old Password</label>
+            <input class="form-control input-field" type="password" id="oldPassword" @bind="@OldPassword" />
+        </div>
+        <div class="form-group">
+            <label for="username">New Password</label>
+            <input class="form-control input-field" type="password" id="newPassword" @bind="@NewPassword" />
+        </div>
+        <button class="btn btn-primary" @onclick="() => ResetPassword(OldPassword, NewPassword)">Submit</button>
+        @if(Errored)
+        {
+            <small class="text-muted">@ErrorMessage</small>
+        }
+    }
+    else
+    {
+        <p>Password has been reset!</p>
+    }
+</div>
+
+@code
+{
+    public string OldPassword = "";
+    public string NewPassword = "";
+    public bool Success = false;
+
+    public string ErrorMessage = "";
+    public bool Errored => !string.IsNullOrEmpty(ErrorMessage);
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!UserService.LoggedIn)
+            {
+                NavManager.NavigateTo("/login");
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public bool ResetPassword(string oldPassword, string newPassword)
+    {
+        if (UserService.CurrentUser == null) return false;
+
+        if (UserService.CurrentUser.ChangePassword(oldPassword, newPassword))
+        {
+            Success = true;
+            return true;
+        }
+
+        ErrorMessage = "Old Password did not match!";
+        return false;
+    }
+}
