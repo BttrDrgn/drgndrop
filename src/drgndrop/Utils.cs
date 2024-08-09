@@ -384,19 +384,6 @@ namespace drgndrop
             Video,
         }
 
-        public static Dictionary<string, MediaType> MediaMimeTypes = new Dictionary<string, MediaType>()
-        {
-            { "image/jpeg", MediaType.Image },
-            { "image/png", MediaType.Image },
-            { "image/gif", MediaType.Image },
-            { "video/webm", MediaType.Video },
-            { "video/x-m4v", MediaType.Video },
-            { "video/mp4", MediaType.Video },
-            { "audio/wav", MediaType.Audio },
-            { "audio/mpeg", MediaType.Video },
-            { "audio/ogg", MediaType.Audio },
-        };
-
         public static string GetMIMEType(string file)
         {
             var ext = GetExtension(file).ToLower();
@@ -475,14 +462,15 @@ namespace drgndrop
 
         public static bool IsMedia(string mimetype)
         {
-            return MediaMimeTypes.ContainsKey(mimetype.ToLower());
+            return GetMediaType(mimetype.ToLower()) != MediaType.Null;
         }
 
         public static MediaType GetMediaType(string mimetype)
         {
-            MediaType mediaType = MediaType.Null;
-            MediaMimeTypes.TryGetValue(mimetype.ToLower(), out mediaType);
-            return mediaType;
+            if (mimetype.Contains("audio")) return MediaType.Audio;
+            else if (mimetype.Contains("video")) return MediaType.Video;
+            else if (mimetype.Contains("image")) return MediaType.Image;
+            else return MediaType.Null;
         }
 
         public static bool Compare(this byte[] cmp0, byte[] cmp1)
