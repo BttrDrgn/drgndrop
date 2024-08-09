@@ -42,6 +42,13 @@ namespace drgndrop
             return false;
         }
 
+        public void ForceChangePassword(string newPass)
+        {
+            Password = Crypt.EnhancedHashPassword(newPass);
+            SessionToken = Guid.NewGuid().ToString();
+            Update();
+        }
+
         public InviteKey CreateInviteKey()
         {
             var newKey = Database.CreateInviteKey(this);
