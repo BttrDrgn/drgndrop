@@ -49,7 +49,7 @@ namespace drgndrop
                             Author = new Author()
                             {
                                 Name = entry["author"]["login"].ToString(),
-                                URL = entry["author"]["url"].ToString(),
+                                URL = entry["author"]["html_url"].ToString(),
                                 AvatarURL = entry["author"]["avatar_url"].ToString(),
                             }
                         });
