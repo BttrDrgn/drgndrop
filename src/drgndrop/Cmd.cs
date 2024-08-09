@@ -93,9 +93,9 @@ namespace drgndrop
                     }
                 });
                 
-                RegisterCommand("pw", "usage: pw (user:string) (oldpass:string) (newpass:string); change passwords", (cmd, args) =>
+                RegisterCommand("pw", "usage: pw (user:string) (newpass:string); change passwords", (cmd, args) =>
                 {
-                    if (args.Count() == 4)
+                    if (args.Count() == 3)
                     {
                         User? user = Database.GetUserByName(args[1]);
                         if (user == null)
@@ -104,21 +104,8 @@ namespace drgndrop
                             return;
                         }
 
-                        if (!user.PasswordCheck(args[2]))
-                        {
-                            cmd.WriteLine($"err: oldpass did not match");
-                            return;
-                        }
-
-                        if (user.ChangePassword(args[2], args[3]))
-                        {
-                            cmd.WriteLine($"info: password for \"{args[1]}\" has been changed");
-
-                        }
-                        else
-                        {
-                            cmd.WriteLine($"err: oldpass did not match");
-                        }
+                        user.ForceChangePassword(args[2]);
+                        cmd.WriteLine($"info: password for \"{args[1]}\" has been changed");
                     }
                     else
                     {
