@@ -78,6 +78,12 @@ namespace drgndrop
                 ctx.Response.Redirect("/upload", true);
             });
 
+            app.MapGet("/ads.txt", async (HttpContext ctx) =>
+            {
+                Results.StatusCode(200);
+                return AdsenseCode;
+            });
+
             app.MapGet("/src", async (HttpContext ctx) =>
             {
                 ctx.Response.Redirect($"https://github.com/{Git.Repo}", true);
