@@ -18,12 +18,14 @@ namespace drgndrop
         public static string TempPath = Path.Combine("C:", "drgndrop", "debug", "temp");
         public static string RepoPath = Path.Combine("C:", "drgndrop", "debug", "repo");
         public static string DatabasePath = Path.Combine("C:", "drgndrop", "debug", "database");
+        public static string AdsenseCode = "";
 #else
         public static string Http = "https";
         public static string UploadPath = Path.Combine("C:", "drgndrop", "uploads");
         public static string TempPath = Path.Combine("C:", "drgndrop", "temp");
         public static string RepoPath = Path.Combine("C:", "drgndrop", "repo");
         public static string DatabasePath = Path.Combine("C:", "drgndrop", "database");
+        public static string AdsenseCode = "";
 #endif
 
         public static string AppName = "Drgndrop";
@@ -203,6 +205,7 @@ namespace drgndrop
                 writer.WriteLine($"[host]");
                 writer.WriteLine($"appname = \"Drgndrop - Debug\"");
                 writer.WriteLine($"domain = \"localhost:5132\"");
+
                 writer.WriteLine($"[file]");
                 writer.WriteLine($"maxfilesize = 50 # in MB");
                 writer.WriteLine($"uploadpath = \"C:/drgndrop/debug/uploads/\"");
@@ -217,6 +220,9 @@ namespace drgndrop
 
                 writer.WriteLine($"[git]");
                 writer.WriteLine($"repo = \"BttrDrgn/drgndrop\"");
+
+                writer.WriteLine($"[web]");
+                writer.WriteLine($"adsense = \"\"");
 #else
                 writer.WriteLine($"[host]");
                 writer.WriteLine($"appname = \"Drgndrop\"");
@@ -236,6 +242,9 @@ namespace drgndrop
 
                 writer.WriteLine($"[git]");
                 writer.WriteLine($"repo = \"BttrDrgn/drgndrop\"");
+
+                writer.WriteLine($"[web]");
+                writer.WriteLine($"adsense = \"\"");
 #endif
                 writer.Close();
             }
@@ -256,6 +265,8 @@ namespace drgndrop
             DatabasePath = toml.Get("file", "dbpath", Path.Combine("C:", "drgndrop", "database"));
 
             Git.Repo = toml.Get("git", "repo", "BttrDrgn/drgndrop");
+
+            AdsenseCode = toml.Get("web", "adsense", "");
 
             string dbFile = "database.db";
 
