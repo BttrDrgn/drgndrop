@@ -1,0 +1,53 @@
+﻿@page "/keys"
+@using drgndrop.Services
+@inject NavigationManager NavManager
+@inject UserService UserService
+
+<PageTitle>Keys</PageTitle>
+
+<div class="container-fluid">
+    <table class="table text-white">
+        <thead>
+            <tr>
+                <th>Used By</th>
+                <th>Key</th>
+                <th>Creation</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < InviteKeys.Count; i++)
+            {
+                <tr>
+                    <td>@InviteKeys[i].UsedBy</td>
+                    <td>@InviteKeys[i].Value</td>
+                    <td>@InviteKeys[i].Creation</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    public List<InviteKey> InviteKeys = new List<InviteKey>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!UserService.LoggedIn)
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+        else
+        {
+            InviteKeys = Database.GetKeys(UserService.CurrentUser);
+            StateHasChanged();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}
