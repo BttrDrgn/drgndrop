@@ -18,19 +18,19 @@ namespace drgndrop
         public static string TempPath = Path.Combine("C:", "drgndrop", "debug", "temp");
         public static string RepoPath = Path.Combine("C:", "drgndrop", "debug", "repo");
         public static string DatabasePath = Path.Combine("C:", "drgndrop", "debug", "database");
-        public static string AdsenseCode = "";
 #else
         public static string Http = "https";
         public static string UploadPath = Path.Combine("C:", "drgndrop", "uploads");
         public static string TempPath = Path.Combine("C:", "drgndrop", "temp");
         public static string RepoPath = Path.Combine("C:", "drgndrop", "repo");
         public static string DatabasePath = Path.Combine("C:", "drgndrop", "database");
-        public static string AdsenseCode = "";
 #endif
 
         public static string AppName = "Drgndrop";
         public static string DomainName = "localhost:5132";
         public static string LibPath = Path.Combine("C:", "drgndrop", "lib");
+        public static string AdsenseCode = "";
+        public static bool RestrictUpload = false;
 
         public static long MaxFileSize = 50L * 1024 * 1024;
         public static string CommitSHA = "";
@@ -219,16 +219,6 @@ namespace drgndrop
                 writer.WriteLine($"libpath = \"C:/drgndrop/lib/\"");
                 writer.WriteLine($"repopath = \"C:/drgndrop/debug/repo/\"");
                 writer.WriteLine($"dbpath = \"C:/drgndrop/debug/database/\"");
-
-                writer.WriteLine($"[database]");
-                writer.WriteLine($"password = \"\"");
-                writer.WriteLine($"shared = true");
-
-                writer.WriteLine($"[git]");
-                writer.WriteLine($"repo = \"BttrDrgn/drgndrop\"");
-
-                writer.WriteLine($"[web]");
-                writer.WriteLine($"adsense = \"\"");
 #else
                 writer.WriteLine($"[host]");
                 writer.WriteLine($"appname = \"Drgndrop\"");
@@ -241,6 +231,7 @@ namespace drgndrop
                 writer.WriteLine($"libpath = \"C:/drgndrop/lib/\"");
                 writer.WriteLine($"repopath = \"C:/drgndrop/repo/\"");
                 writer.WriteLine($"dbpath = \"C:/drgndrop/database/\"");
+#endif
 
                 writer.WriteLine($"[database]");
                 writer.WriteLine($"password = \"\"");
@@ -251,7 +242,8 @@ namespace drgndrop
 
                 writer.WriteLine($"[web]");
                 writer.WriteLine($"adsense = \"\"");
-#endif
+                writer.WriteLine($"restrictupload = false");
+
                 writer.Close();
             }
 
@@ -273,6 +265,7 @@ namespace drgndrop
             Git.Repo = toml.Get("git", "repo", "BttrDrgn/drgndrop");
 
             AdsenseCode = toml.Get("web", "adsense", "");
+            RestrictUpload = toml.Get("web", "restrictupload", false);
 
             string dbFile = "database.db";
 

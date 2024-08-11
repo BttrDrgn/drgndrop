@@ -11,7 +11,11 @@
 <PageTitle>Upload</PageTitle>
 
 <div class="container-fluid">
-    @if(!Finished)
+    @if(Program.RestrictUpload)
+    {
+        <p>Please login to upload files.</p>
+    }
+    else if(!Finished)
     {
         @if (!Uploading)
         {
