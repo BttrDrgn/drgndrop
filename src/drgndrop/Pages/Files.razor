@@ -128,7 +128,7 @@ else
     {
         if (UserService.CurrentUser != null)
         {
-            if (UserService.CurrentUser.IsInGroup(Group.Admin) || UserService.CurrentUser.OwnsFile(FileID))
+            if (UserService.CurrentUser.Group >= Group.Admin || UserService.CurrentUser.OwnsFile(FileID))
             {
                 bool deleted = false;
 
@@ -181,7 +181,7 @@ else
                 HasFileAccess = UserService.CurrentUser.OwnsFile(FileID);
                 if (!HasFileAccess)
                 {
-                    HasFileAccess = UserService.CurrentUser.IsInGroup(Group.Admin);
+                    HasFileAccess = UserService.CurrentUser.Group >= Group.Admin;
                 }
 
                 StateHasChanged();
