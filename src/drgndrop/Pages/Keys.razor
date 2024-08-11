@@ -18,7 +18,7 @@
             @for (int i = 0; i < InviteKeys.Count; i++)
             {
                 <tr>
-                    <td>@InviteKeys[i].UsedBy</td>
+                    <td>@Database.GetUserByGUID(InviteKeys[i].UsedBy).Name</td>
                     <td>@InviteKeys[i].Value</td>
                     <td>@InviteKeys[i].Creation</td>
                 </tr>
