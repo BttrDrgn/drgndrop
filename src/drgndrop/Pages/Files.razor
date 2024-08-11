@@ -62,9 +62,14 @@
                 <a class="btn btn-secondary" href="@DownloadLink" target="_blank">Download</a>
         </span>
 
-        @if(Owner)
+        @if (HasFileAccess)
         {
-            <button class="btn btn-danger">Delete File</button>
+            <button class="btn btn-danger" @onclick="DeleteFile">Delete File</button>
+
+            @if (Errored)
+            {
+                <small class="text-muted">@ErrorMessage</small>
+            }
         }
     }
 }
@@ -83,7 +88,9 @@ else
     public bool PasswordCheck = false;
     public string Key = "";
     public string Description = "";
-    public bool Owner = false;
+    public bool HasFileAccess = false;
+    public string ErrorMessage = "";
+    public bool Errored => !String.IsNullOrEmpty(ErrorMessage);
 
     protected override void OnInitialized()
     {
@@ -117,13 +124,66 @@ else
         base.OnInitialized();
     }
 
+    public async Task DeleteFile()
+    {
+        if (UserService.CurrentUser != null)
+        {
+            if (UserService.CurrentUser.IsInGroup(Group.Admin) || UserService.CurrentUser.OwnsFile(FileID))
+            {
+                bool deleted = false;
+
+                string filePath = Path.Combine(Program.UploadPath, FileID);
+
+                if (Directory.Exists(filePath))
+                {
+                    try
+                    {
+                        Directory.Delete(filePath, true);
+                        deleted = true;
+                    }
+                    catch (Exception e)
+                    {
+                        ErrorMessage = e.Message;
+                    }
+                }
+
+                var users = Database.GetUsers();
+                foreach (var user in users)
+                {
+                    if (user.Uploads == null) continue;
+
+                    foreach (var upload in user.Uploads)
+                    {
+                        if (upload.ID == FileID)
+                        {
+                            user.Uploads.Remove(upload);
+                            deleted = true;
+                            user.Update();
+                            break;
+                        }
+                    }
+                }
+
+                if (deleted)
+                {
+                    NavManager.NavigateTo("/myfiles");
+                }
+            }
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if(firstRender)
         {
             if (UserService.CurrentUser != null)
             {
-                Owner = UserService.CurrentUser.OwnsFile(FileID);
+                HasFileAccess = UserService.CurrentUser.OwnsFile(FileID);
+                if (!HasFileAccess)
+                {
+                    HasFileAccess = UserService.CurrentUser.IsInGroup(Group.Admin);
+                }
+
                 StateHasChanged();
             }
         }

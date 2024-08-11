@@ -69,8 +69,6 @@
             StateHasChanged();
         }
 
-        Console.WriteLine(Program.AdsenseCode);
-
         NavManager.LocationChanged += LocationChanged;
         Ready = true;
         await base.OnInitializedAsync();
