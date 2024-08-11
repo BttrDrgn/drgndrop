@@ -52,7 +52,7 @@
     public bool AccountCheck(string username, string password)
     {
         Attempted = true;
-        User? user = Database.GetUserByName(username, true);
+        User? user = Database.GetUserByName(username);
         if(user != null)
         {
             if (User.IsInGroup(Group.Admin))

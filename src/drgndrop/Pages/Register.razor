@@ -101,7 +101,7 @@
             return false;
         }
 
-        if (!Regex.IsMatch(username, "^[\\x00-\\x7F0-9]+$"))
+        if (!Regex.IsMatch(username, "^[\\x00-\\x7F0-9 ]+$"))
         {
             ErrorMessage = "Username must not contain any special characters";
             return false;
@@ -111,7 +111,7 @@
         {
             if(Database.CreateUser(username, password, key))
             {
-                User? user = Database.GetUserByName(username, true);
+                User? user = Database.GetUserByName(username);
                 if (user != null)
                 {
                     await CookieService.WriteCookie(JS, "session-token", user.SessionToken, 30);

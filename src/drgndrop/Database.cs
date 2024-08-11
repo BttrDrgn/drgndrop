@@ -53,21 +53,10 @@ namespace drgndrop
         }
 
         //USERS
-        public static User? GetUserByName(string name, bool admin = false)
+        public static User? GetUserByName(string name)
         {
             List<User> tempUsers = Users.Query().Where(x => x.Name == name.ToLower()).ToList();
-            if (tempUsers.Count == 1)
-            {
-                //Im not sure if blazor leaks these values into the client with server rendering but theres no reason to risk it i guess
-                User retn = tempUsers[0];
-                if (!admin)
-                {
-                    retn.SessionToken = "";
-                    retn.GUID = "";
-                    retn.Password = "";
-                }
-                return retn;
-            }
+            if (tempUsers.Count == 1) return tempUsers[0];
             return null;
         }
 
@@ -84,21 +73,10 @@ namespace drgndrop
             return null;
         }
 
-        public static User? GetUserByGUID(string guid, bool admin = false)
+        public static User? GetUserByGUID(string guid)
         {
             List<User> tempUsers = Users.Query().Where(x => x.GUID == guid.ToLower()).ToList();
-            if (tempUsers.Count == 1)
-            {
-                //Im not sure if blazor leaks these values into the client with server rendering but theres no reason to risk it i guess
-                User retn = tempUsers[0];
-                if (!admin)
-                {
-                    retn.SessionToken = "";
-                    retn.GUID = "";
-                    retn.Password = "";
-                }
-                return retn;
-            }
+            if (tempUsers.Count == 1) return tempUsers[0];
             return null;
         }
 

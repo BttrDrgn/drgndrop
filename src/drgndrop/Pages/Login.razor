@@ -47,7 +47,7 @@
     public async Task<bool> LoginUser(string username, string password)
     {
         Attempted = true;
-        User? user = Database.GetUserByName(username, true);
+        User? user = Database.GetUserByName(username);
         if(user != null)
         {
             if(user.GUID == Database.ADMIN_GUID) return false;
