@@ -101,7 +101,7 @@
             return false;
         }
 
-        if (!Regex.IsMatch(username, "^[\\x00-\\x7F0-9 ]+$"))
+        if (!Regex.IsMatch(username, "^[\\x00-\\x7F0-9]+$"))
         {
             ErrorMessage = "Username must not contain any special characters";
             return false;
