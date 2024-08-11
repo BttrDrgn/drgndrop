@@ -117,7 +117,22 @@ namespace drgndrop
                 {
                     cmd.Output = new List<string>();
                 });
-                
+
+                RegisterCommand("restrict", "usage: restrict [enabled:bool]; restrict user uploading; if no arg, toggle value", (cmd, args) =>
+                {
+                    if (args.Count() == 2)
+                    {
+                        Program.RestrictUpload = bool.Parse(args[2]);
+                    }
+                    else if (args.Count() == 1)
+                    {
+                        Program.RestrictUpload = !Program.RestrictUpload;
+                    }
+
+                    string txt = Program.RestrictUpload ? "enabled" : "disabled";
+                    cmd.WriteLine($"Restriction is now {txt}");
+                });
+
                 RegisterCommand("group", "usage: group (user:string) (group:string); changes the group of a user, has limitations", (cmd, args) =>
                 {
                     if (args.Count() == 3)
@@ -305,6 +320,57 @@ namespace drgndrop
                     {
                         cmd.WriteLine("usage: del (fileid:string)");
                     }
+                RegisterCommand("del", "usage: del (fileid:string)", (cmd, args) =>
+                {
+                    if(args.Count() == 2)
+                    {
+                        string fileId = args[1];
+                        bool deleted = false;
+                        string filePath = Path.Combine(Program.UploadPath, fileId);
+
+                        if (Directory.Exists(filePath))
+                        {
+                            try
+                            {
+                                Directory.Delete(filePath, true);
+                                deleted = true;
+                            }
+                            catch (Exception e) 
+                            {
+                                cmd.WriteLine($"err: {e.Message}");
+                            }
+                        }
+                        else
+                        {
+                            cmd.WriteLine($"warn: unable to find file with id \"{fileId}\"");
+                        }
+
+                        var users = Database.GetUsers();
+                        foreach (var user in users)
+                        {
+                            if (user.Uploads == null) continue;
+
+                            foreach(var upload in user.Uploads)
+                            {
+                                if(upload.ID == fileId)
+                                {
+                                    user.Uploads.Remove(upload);
+                                    cmd.WriteLine($"Deleted id \"{upload.ID}\" from user \"{user.Name}\"");
+                                    deleted = true;
+                                    user.Update();
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (deleted) cmd.WriteLine($"File \"{fileId}\" has been deleted");
+                        else cmd.WriteLine($"err: unable to find both file with id or in user uploads");
+                    }
+                    else
+                    {
+                        cmd.WriteLine("usage: del (fileid:string)");
+                    }
+                });
                 });
             }
         }
