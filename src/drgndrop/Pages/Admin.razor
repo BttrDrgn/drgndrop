@@ -45,7 +45,7 @@
     public string Password = "";
     public User? User;
     public bool LoggedIn = false;
-    public bool Allowed => User?.Group >= Group.Admin;
+    public bool Allowed => User?.IsInGroup(Group.Admin) == true;
     public bool Attempted = false;
     public Cmd Console = null;
 
@@ -55,7 +55,7 @@
         User? user = Database.GetUserByName(username);
         if(user != null)
         {
-            if(user.Group >= Group.Admin)
+            if (User.IsInGroup(Group.Admin))
             {
                 LoggedIn = user.PasswordCheck(password);
                 User = user;
