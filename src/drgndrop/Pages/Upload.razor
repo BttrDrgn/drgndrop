@@ -41,7 +41,9 @@
             </LoadingTemplate>
 
             <div class="new-line"></div>
-            <p>@(Utils.BytesToMB(UploadedBytes, 2))MB / @(Utils.BytesToMB(DroppedFile.Size, 2))MB</p>
+            <p>@(Utils.BytesToMB(UploadedBytes, 2))MB / @(Utils.BytesToMB(DroppedFile.Size, 2))MB (@MBsString)</p>
+            <p>@ETAString</p>
+            <small class="text-muted">ETA for entertainment purposes only</small>
         }
     }
 
@@ -59,6 +61,10 @@
     public bool Uploading = false;
     private bool Encrypted = true;
     private int UploadedBytes = 0;
+    private int PrevUploadedBytes = 0;
+    private int BytesPerSecond = 0;
+    public string MBsString = "0.00 MB/s";
+    public string ETAString = "ETA: ...";
     private string LinkToFile = "";
     private bool AutoCopy = true;
     private bool AutoCopied = false;
@@ -78,6 +84,7 @@
         Uploading = false;
         Finished = false;
         UploadedBytes = 0;
+        PrevUploadedBytes = 0;
 
         DroppedFile = null;
 
@@ -99,7 +106,39 @@
 
         DroppedFile = files[0];
 
-        await using var Timer = new Timer(_ => InvokeAsync(() => StateHasChanged()));
+        await using var Timer = new Timer(_ => InvokeAsync(() =>
+        {
+            BytesPerSecond = UploadedBytes - PrevUploadedBytes;
+            MBsString = $"{Utils.BytesToMB(BytesPerSecond, 2)} MB/s";
+
+            if (UploadedBytes < DroppedFile.Size)
+            {
+                if (BytesPerSecond > 0)
+                {
+                    TimeSpan timeLeft = TimeSpan.FromSeconds((int)MathF.Abs((UploadedBytes - DroppedFile.Size) / BytesPerSecond));
+                    if (timeLeft.Hours > 0)
+                    {
+                        ETAString = $"ETA: {timeLeft:hh\\:mm\\:ss}";
+                    }
+                    else
+                    {
+                        ETAString = $"ETA: {timeLeft:mm\\:ss}";
+                    }
+                }
+                else
+                {
+                    ETAString = "ETA: Never";
+                }
+            }
+            else
+            {
+                if (Encrypted) ETAString = "Encrypting...";
+                else ETAString = "Finalizing...";
+            }
+
+            PrevUploadedBytes = UploadedBytes;
+            StateHasChanged();
+        }));
         Timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
 
         var drgnfile = GenerateNewFile(DroppedFile.Size);
@@ -147,7 +186,7 @@
         {
             if (DroppedFile.Size >= Program.MaxFileSize)
             {
-                ErrorMsg = $"One or more file sizes are too big ({DroppedFile.Name})! The size limit is {Utils.BytesToMB(Program.MaxFileSize)} MB per file.";
+                ErrorMsg = $"The file size for {DroppedFile.Name} is too big! The size limit is {Utils.BytesToMB(Program.MaxFileSize)} MB per file.";
                 throw new InvalidOperationException(ErrorMsg);
             }
 
