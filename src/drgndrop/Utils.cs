@@ -428,6 +428,16 @@ namespace drgndrop
             return MathF.Round(BytesToMB(bytes), digits);
         }
 
+        public static float MbToTGb(float mbs)
+        {
+            return mbs / 1024f;
+        }
+
+        public static float MbToTGb(float mbs, int digits)
+        {
+            return MathF.Round(MbToTGb(mbs), digits);
+        }
+
         public static string GetQuery(in string queryString, string key)
         {
             var split = queryString.Split('&');

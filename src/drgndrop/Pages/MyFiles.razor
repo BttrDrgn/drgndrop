@@ -6,13 +6,22 @@
 <PageTitle>My Files</PageTitle>
 
 <div class="container-fluid">
+    @if (MbUsage >= 1024f)
+    {
+        <h2>@(Utils.MbToTGb(MbUsage, 2)) GB</h2>
+    }
+    else
+    {
+        <h2>@MbUsage MB</h2>
+    }
+
     <table class="table text-white">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>File</th>
-                <th>Creation</th>
-                <th>Size</th>
+                <th @onclick="() => SortTable(Sortation.ID)" class="sortable">ID @GetSortIndicator(Sortation.ID)</th>
+                <th @onclick="() => SortTable(Sortation.File)" class="sortable">File @GetSortIndicator(Sortation.File)</th>
+                <th @onclick="() => SortTable(Sortation.Creation)" class="sortable">Creation @GetSortIndicator(Sortation.Creation)</th>
+                <th @onclick="() => SortTable(Sortation.Size)" class="sortable">Size @GetSortIndicator(Sortation.Size)</th>
                 <th>Password</th>
             </tr>
         </thead>
@@ -36,7 +45,19 @@
 </div>
 
 @code {
+    public enum Sortation
+    {
+        ID,
+        File,
+        Creation,
+        Size,
+    }
+
     public List<DrgnfileInfo> Files = new List<DrgnfileInfo>();
+    public float MbUsage = 0f;
+
+    private Sortation CurrentSort = Sortation.Creation;
+    private bool isAscending = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -59,16 +80,62 @@
                 user.Update();
             }
             Files = user.Uploads;
+
+            long totalSize = 0;
+            foreach (var file in Files)
+            {
+                totalSize += file.Size;
+            }
+            MbUsage = Utils.BytesToMB(totalSize, 2);
+
+            SortFiles();
+
             StateHasChanged();
         }
 
         await base.OnAfterRenderAsync(firstRender);
     }
 
+    private void SortTable(Sortation sortation)
+    {
+        if (CurrentSort == sortation)
+        {
+            isAscending = !isAscending;
+        }
+        else
+        {
+            CurrentSort = sortation;
+            isAscending = true;
+        }
+
+        SortFiles();
+    }
+
+    private void SortFiles()
+    {
+        Files = CurrentSort switch
+        {
+            Sortation.ID => !isAscending ? Files.OrderBy(f => f.ID).ToList() : Files.OrderByDescending(f => f.ID).ToList(),
+            Sortation.File => !isAscending ? Files.OrderBy(f => f.Name).ToList() : Files.OrderByDescending(f => f.Name).ToList(),
+            Sortation.Creation => isAscending ? Files.OrderBy(f => f.Creation).ToList() : Files.OrderByDescending(f => f.Creation).ToList(),
+            Sortation.Size => isAscending ? Files.OrderBy(f => f.Size).ToList() : Files.OrderByDescending(f => f.Size).ToList(),
+            _ => Files
+        };
+    }
+
+    private string GetSortIndicator(Sortation sortation)
+    {
+        if (CurrentSort == sortation)
+        {
+            return isAscending ? "▲" : "▼";
+        }
+        return string.Empty;
+    }
+
     public string GetFileLink(string id, string key = "")
     {
         string link = $"{Program.Http}://{Program.DomainName}/files/{id}";
-        if(!string.IsNullOrEmpty(key)) link += $"?key={key}";
+        if (!string.IsNullOrEmpty(key)) link += $"?key={key}";
         return link;
     }
 }
