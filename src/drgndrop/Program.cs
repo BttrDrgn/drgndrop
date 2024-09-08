@@ -29,7 +29,6 @@ namespace drgndrop
         public static string AppName = "Drgndrop";
         public static string DomainName = "localhost:5132";
         public static string LibPath = Path.Combine("C:", "drgndrop", "lib");
-        public static string AdsenseCode = "";
         public static bool RestrictUpload = false;
 
         public static long MaxFileSize = 50L * 1024 * 1024;
@@ -76,12 +75,6 @@ namespace drgndrop
             app.MapGet("/", async (HttpContext ctx) =>
             {
                 ctx.Response.Redirect("/upload", true);
-            });
-
-            app.MapGet("/ads.txt", async (HttpContext ctx) =>
-            {
-                Results.StatusCode(200);
-                return AdsenseCode;
             });
 
             app.MapGet("/src", async (HttpContext ctx) =>
@@ -241,7 +234,6 @@ namespace drgndrop
                 writer.WriteLine($"repo = \"BttrDrgn/drgndrop\"");
 
                 writer.WriteLine($"[web]");
-                writer.WriteLine($"adsense = \"\"");
                 writer.WriteLine($"restrictupload = false");
 
                 writer.Close();
@@ -264,7 +256,6 @@ namespace drgndrop
 
             Git.Repo = toml.Get("git", "repo", "BttrDrgn/drgndrop");
 
-            AdsenseCode = toml.Get("web", "adsense", "");
             RestrictUpload = toml.Get("web", "restrictupload", false);
 
             string dbFile = "database.db";
