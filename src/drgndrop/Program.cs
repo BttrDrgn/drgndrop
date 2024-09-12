@@ -17,12 +17,14 @@ namespace drgndrop
         public static string UploadPath = Path.Combine("C:", "drgndrop", "debug", "uploads");
         public static string TempPath = Path.Combine("C:", "drgndrop", "debug", "temp");
         public static string RepoPath = Path.Combine("C:", "drgndrop", "debug", "repo");
+        public static string NewsPath = Path.Combine("C:", "drgndrop", "debug", "news");
         public static string DatabasePath = Path.Combine("C:", "drgndrop", "debug", "database");
 #else
         public static string Http = "https";
         public static string UploadPath = Path.Combine("C:", "drgndrop", "uploads");
         public static string TempPath = Path.Combine("C:", "drgndrop", "temp");
         public static string RepoPath = Path.Combine("C:", "drgndrop", "repo");
+        public static string NewsPath = Path.Combine("C:", "drgndrop", "news");
         public static string DatabasePath = Path.Combine("C:", "drgndrop", "database");
 #endif
 
@@ -211,6 +213,7 @@ namespace drgndrop
                 writer.WriteLine($"temppath = \"C:/drgndrop/debug/temp/\"");
                 writer.WriteLine($"libpath = \"C:/drgndrop/lib/\"");
                 writer.WriteLine($"repopath = \"C:/drgndrop/debug/repo/\"");
+                writer.WriteLine($"newspath = \"C:/drgndrop/debug/news/\"");
                 writer.WriteLine($"dbpath = \"C:/drgndrop/debug/database/\"");
 #else
                 writer.WriteLine($"[host]");
@@ -222,6 +225,7 @@ namespace drgndrop
                 writer.WriteLine($"uploadpath = \"C:/drgndrop/uploads/\"");
                 writer.WriteLine($"temppath = \"C:/drgndrop/temp/\"");
                 writer.WriteLine($"libpath = \"C:/drgndrop/lib/\"");
+                writer.WriteLine($"newspath = \"C:/drgndrop/news/\"");
                 writer.WriteLine($"repopath = \"C:/drgndrop/repo/\"");
                 writer.WriteLine($"dbpath = \"C:/drgndrop/database/\"");
 #endif
@@ -252,6 +256,7 @@ namespace drgndrop
             TempPath = toml.Get("file", "temppath", Path.Combine("C:", "drgndrop", "temp"));
             LibPath = toml.Get("file", "libpath", Path.Combine("C:", "drgndrop", "lib"));
             RepoPath = toml.Get("file", "repopath", Path.Combine("C:", "drgndrop", "repo"));
+            NewsPath = toml.Get("file", "newspath", Path.Combine("C:", "drgndrop", "news"));
             DatabasePath = toml.Get("file", "dbpath", Path.Combine("C:", "drgndrop", "database"));
 
             Git.Repo = toml.Get("git", "repo", "BttrDrgn/drgndrop");

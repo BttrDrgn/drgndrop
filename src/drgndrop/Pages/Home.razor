@@ -18,7 +18,22 @@
         <div class="col">
             <h2>News</h2>
             <div class="list-group">
-
+                @if(News.Count == null || News.Count <= 0)
+                {
+                    <div class="list-group-item bg-dark text-light">
+                        <p>Nothing yet...</p>
+                    </div>
+                }
+                else
+                {
+                    for(int i = 0; i < News.Count; ++i)
+                    {
+                        <div class="list-group-item text-light git-commit" style="@(i == 0 ? "background-color: #373d45" : "background-color: #212529" )">
+                            <h3>@News[i].Title <small style="font-size: 1rem; color: #b5b5b5">@News[i].Creation.ToString()</small></h3>
+                            <p>@((MarkupString)News[i].Content)</p>
+                        </div>
+                    }
+                }
             </div>
         </div>
         <div class="col">
@@ -45,15 +60,37 @@
 </div>
 
 @code {
-    public class NewsEntry
-    {
-
-    };
-
     public List<NewsEntry> News = new List<NewsEntry>();
 
-    public void LoadNews()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        
+        if (firstRender)
+        {
+            LoadNews();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async Task LoadNews()
+    {
+        DirectoryInfo directory = new DirectoryInfo(Program.NewsPath);
+
+        FileInfo[] files = directory.GetFiles()
+            .OrderByDescending(f => f.LastWriteTime)
+            .Take(10)
+            .ToArray();
+
+        foreach (FileInfo file in files)
+        {
+            string title = file.Name.Replace(file.Extension, "");
+            string content = File.ReadAllText(file.FullName);
+            DateTime creation = file.CreationTimeUtc;
+            DateTime edited = file.LastWriteTimeUtc;
+
+            News.Add(new NewsEntry(title, content, creation, edited));
+        }
+
+        StateHasChanged();
     }
 }
