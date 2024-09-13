@@ -30,7 +30,7 @@
                     {
                         <div class="list-group-item text-light git-commit" style="@(i == 0 ? "background-color: #373d45" : "background-color: #212529" )">
                             <h3>@News[i].Title <small style="font-size: 1rem; color: #b5b5b5">@News[i].Creation.ToString()</small></h3>
-                            <p>@((MarkupString)News[i].Content)</p>
+                            <p>@((MarkupString)News[i].ShortDescription)</p>
                         </div>
                     }
                 }
@@ -83,12 +83,7 @@
 
         foreach (FileInfo file in files)
         {
-            string title = file.Name.Replace(file.Extension, "");
-            string content = File.ReadAllText(file.FullName);
-            DateTime creation = file.CreationTimeUtc;
-            DateTime edited = file.LastWriteTimeUtc;
-
-            News.Add(new NewsEntry(title, content, creation, edited));
+            News.Add(NewsEntry.Parse(file));
         }
 
         StateHasChanged();
