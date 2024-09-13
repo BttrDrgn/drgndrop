@@ -74,11 +74,6 @@ namespace drgndrop
 
             app.MapFallbackToPage("/_Host");
 
-            app.MapGet("/", async (HttpContext ctx) =>
-            {
-                ctx.Response.Redirect("/upload", true);
-            });
-
             app.MapGet("/src", async (HttpContext ctx) =>
             {
                 ctx.Response.Redirect($"https://github.com/{Git.Repo}", true);
