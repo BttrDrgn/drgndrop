@@ -273,14 +273,9 @@ namespace drgndrop
 
             SevenZipBase.SetLibraryPath(Path.Combine(LibPath, "7z", "x64", "7za.dll"));
 
-            var _ = Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushTempCache, true);
+            _ = Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushTempCache, true);
             _ = Utils.IvokeInterval(TimeSpan.FromMinutes(30), FlushNullData, true);
             _ = Utils.IvokeAsyncInterval(TimeSpan.FromMinutes(30), Git.GatherCommits, true);
-
-            if (Directory.Exists(Path.Combine(RepoPath, ".git")))
-            {
-
-            }
 
             Cmd.Initialize();
         }
@@ -298,42 +293,18 @@ namespace drgndrop
 
         public static void FlushNullData()
         {
-            foreach(var folder in Directory.GetDirectories(UploadPath))
+            foreach (var folder in Directory.GetDirectories(UploadPath))
             {
-                var files = Directory.GetFiles(folder);
-                foreach (var file in Directory.GetFiles(folder))
+                var dataFile = Path.Combine(folder, "data");
+                var infoFile = Path.Combine(folder, "info");
+
+                if (!File.Exists(dataFile) || !File.Exists(infoFile) ||
+                    new FileInfo(dataFile).Length == 0 || new FileInfo(infoFile).Length == 0
+                )
                 {
-                    if (file.EndsWith("data") && !Utils.IsFileLocked(file))
-                    {
-                        var info = new FileInfo(Path.Combine(UploadPath, folder, file));
-                        if (info.Length <= 0)
-                        {
-                            Directory.Delete(Path.Combine(UploadPath, folder), true);
-                            break;
-                        }
-                    }
+                    Directory.Delete(folder, true);
                 }
             }
-        }
-
-        public static string? GetArg(string arg)
-        {
-            for(int i = 0; i < Args.Length; ++i)
-            {
-                if (Args[i].StartsWith("--") && Args[i] == arg)
-                {
-                    if(Args.Length > i + 1)
-                    {
-                        if (Args[i + 1].StartsWith("--"))
-                        {
-                            return Args[i + 1];
-                        }
-                    }
-                    return "";
-                }
-            }
-
-            return null;
         }
     }
 }
