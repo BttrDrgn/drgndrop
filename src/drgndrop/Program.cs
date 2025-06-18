@@ -33,7 +33,7 @@ namespace drgndrop
         public static string LibPath = Path.Combine("C:", "drgndrop", "lib");
         public static bool RestrictUpload = false;
 
-        public static long MaxFileSize = 50L * 1024 * 1024;
+        public static long MaxFileSize = 50L * 1000 * 1000;
         public static string CommitSHA = "";
 
         public static string Title = "";
@@ -245,7 +245,7 @@ namespace drgndrop
             AppName = toml.Get("host", "appname", "Drgndrop");
 
             MaxFileSize = toml.Get("file", "maxfilesize", 50L);
-            MaxFileSize *= (long)Math.Round(Math.Pow(1024, 2));
+            MaxFileSize *= (long)Math.Round(Math.Pow(1000, 2));
 
             UploadPath = toml.Get("file", "uploadpath", Path.Combine("C:", "drgndrop", "upload"));
             TempPath = toml.Get("file", "temppath", Path.Combine("C:", "drgndrop", "temp"));

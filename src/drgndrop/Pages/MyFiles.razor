@@ -6,7 +6,7 @@
 <PageTitle>My Files</PageTitle>
 
 <div class="container-fluid">
-    @if (MbUsage >= 1024f)
+    @if (MbUsage >= 1000f)
     {
         <h2>@(Utils.MbToTGb(MbUsage, 2)) GB</h2>
     }

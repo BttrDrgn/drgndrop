@@ -18,9 +18,8 @@ namespace drgndrop
 
         public static Dictionary<string, string> PageHeaders = new()
         {
-            { "/", "Upload" },
+            { "/", "Home" },
             { "/upload", "Upload" },
-            { "/home", "Home" },
             { "/register", "Register" },
             { "/myfiles", "My Files" },
         };
@@ -420,7 +419,7 @@ namespace drgndrop
 
         public static float BytesToMB(float bytes)
         {
-            return bytes / 1024f / 1024f;
+            return bytes / 1000f / 1000f;
         }
 
         public static float BytesToMB(float bytes, int digits)
@@ -430,7 +429,7 @@ namespace drgndrop
 
         public static float MbToTGb(float mbs)
         {
-            return mbs / 1024f;
+            return mbs / 1000f;
         }
 
         public static float MbToTGb(float mbs, int digits)
@@ -619,9 +618,9 @@ namespace drgndrop
             int i = 0;
             double size = bytes;
 
-            while (size >= 1024 && i < suffix.Length - 1)
+            while (size >= 1000 && i < suffix.Length - 1)
             {
-                size /= 1024;
+                size /= 1000;
                 i++;
             }
 

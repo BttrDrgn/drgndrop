@@ -8,16 +8,23 @@ namespace drgndrop.Services
 
         public async Task LoadCookies(IJSRuntime js)
         {
-            Cookies = new Dictionary<string, string>();
-            string cookieString = await js.InvokeAsync<string>("cookies.read");
-            if (!string.IsNullOrEmpty(cookieString))
+            try
             {
-                var splitCookies = cookieString.Split(";");
-                foreach (var cookie in splitCookies)
+                Cookies = new Dictionary<string, string>();
+                string cookieString = await js.InvokeAsync<string>("cookies.read");
+                if (!string.IsNullOrEmpty(cookieString))
                 {
-                    var splitCookie = cookie.Split("=");
-                    Cookies.Add(splitCookie[0], splitCookie[1]);
+                    var splitCookies = cookieString.Split(";");
+                    foreach (var cookie in splitCookies)
+                    {
+                        var splitCookie = cookie.Split("=");
+                        Cookies.Add(splitCookie[0], splitCookie[1]);
+                    }
                 }
+            }
+            catch(Exception ex)
+            {
+                Logger.ErrorLog(ex.Message);
             }
         }
 

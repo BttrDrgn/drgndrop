@@ -53,7 +53,7 @@
             if(user.GUID == Database.ADMIN_GUID) return false;
             if(user.PasswordCheck(password))
             {
-                await CookieService.WriteCookie(JS, "session-token", user.SessionToken, 30);
+                await CookieService.WriteCookie(JS, "session-token", user.SessionToken, 365);
                 UserService.Login(user.SessionToken);
                 NavManager.NavigateTo("/upload");
                 return true;

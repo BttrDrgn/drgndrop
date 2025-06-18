@@ -2,6 +2,7 @@
 @using drgndrop;
 @using drgndrop.Services;
 @using SevenZip;
+@using System.IO.Compression;
 @inject IWebHostEnvironment Environment
 @inject NavigationManager NavManager
 @inject IClipboardService ClipboardService
@@ -139,7 +140,7 @@
             PrevUploadedBytes = UploadedBytes;
             StateHasChanged();
         }));
-        Timer.Change(TimeSpan.FromMilliseconds(1000), TimeSpan.FromMilliseconds(1000));
+        Timer.Change(TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
 
         var drgnfile = GenerateNewFile(DroppedFile.Size);
         await ProcessFile(drgnfile);
